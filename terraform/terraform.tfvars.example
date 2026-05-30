@@ -1,0 +1,11 @@
+aws_region              = "us-east-1"
+project_name            = "pin"
+instance_type           = "t3.micro"
+key_name                = "mi-keypair"
+allowed_cidr            = "0.0.0.0/0"
+app_image               = "nginx:alpine"
+grafana_admin_user      = "admin"
+grafana_admin_password  = "CambiarEstaPassword123!"
+app_external_port       = 8080
+prometheus_external_port = 9090
+grafana_external_port   = 3000

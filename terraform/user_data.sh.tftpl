@@ -1,0 +1,42 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y docker
+systemctl enable docker
+systemctl start docker
+usermod -aG docker ec2-user
+
+mkdir -p /opt/pin/prometheus
+cat > /opt/pin/prometheus/prometheus.yml <<'PROM'
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+PROM
+
+docker network create pin-network || true
+
+docker run -d --name pin-app --restart unless-stopped \
+  --network pin-network \
+  -p ${app_external_port}:80 \
+  ${app_image}
+
+docker run -d --name pin-prometheus --restart unless-stopped \
+  --network pin-network \
+  -p ${prometheus_external_port}:9090 \
+  -v /opt/pin/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+  prom/prometheus:latest
+
+docker volume create pin-grafana-data || true
+
+docker run -d --name pin-grafana --restart unless-stopped \
+  --network pin-network \
+  -p ${grafana_external_port}:3000 \
+  -e GF_SECURITY_ADMIN_USER=${grafana_admin_user} \
+  -e GF_SECURITY_ADMIN_PASSWORD=${grafana_admin_password} \
+  -v pin-grafana-data:/var/lib/grafana \
+  grafana/grafana:latest
