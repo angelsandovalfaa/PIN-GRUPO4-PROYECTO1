@@ -16,10 +16,9 @@ Objetivo: llegar a una entrega completa y defendible en el final.
    - stack usado
    - cómo ejecutar local y nube
    - enlaces a evidencias
-4. Acordar ramas:
-   - `main` (estable)
-   - `develop` (integración)
-   - feature branches por tarea
+4. Estrategia simple de ramas:
+   - usar solo `main`
+   - opcional: abrir PR internos para revisar antes de merge
 
 ---
 
@@ -31,7 +30,7 @@ Meta: workflow que ejecute build, test y deploy correctamente.
 
 1. Crear workflow en `.github/workflows/ci-cd.yml`.
 2. Configurar triggers:
-   - `push` y `pull_request` a `main`/`develop`.
+   - `push` y `pull_request` a `main`.
 3. Definir job de `build`:
    - checkout del código
    - instalación de dependencias
