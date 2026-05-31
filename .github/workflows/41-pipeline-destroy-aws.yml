@@ -34,6 +34,16 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Validate Terraform backend secrets
+        run: |
+          test -n "${TF_STATE_BUCKET}" || (echo "Falta secret TF_STATE_BUCKET" && exit 1)
+          test -n "${TF_STATE_KEY}" || (echo "Falta secret TF_STATE_KEY" && exit 1)
+          test -n "${TF_LOCK_TABLE}" || (echo "Falta secret TF_LOCK_TABLE" && exit 1)
+        env:
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          TF_STATE_KEY: ${{ secrets.TF_STATE_KEY }}
+          TF_LOCK_TABLE: ${{ secrets.TF_LOCK_TABLE }}
+
       - name: Terraform Init
         run: |
           terraform init \
