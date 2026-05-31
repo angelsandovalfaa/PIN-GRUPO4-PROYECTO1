@@ -2,7 +2,12 @@
 set -euxo pipefail
 
 dnf update -y
-dnf install -y docker curl
+dnf install -y docker
+
+# ECS-optimized AL2023 usually ships curl-minimal; avoid curl package conflicts.
+if ! command -v curl >/dev/null 2>&1; then
+  dnf install -y curl-minimal
+fi
 
 # ECS-optimized AL2023 may not ship docker-compose-plugin in repos.
 # Resolve compose with fallbacks so bootstrap does not fail.
