@@ -23,16 +23,61 @@ Construir un flujo completo que:
 - Seguridad: ESLint + Snyk + SBOM CycloneDX
 - Observabilidad: Prometheus + Grafana + cAdvisor + node-exporter
 
-## Estructura del repositorio
+## Estructura del proyecto
 
-- `app/`: aplicación Node.js
-- `monitoring/`: configuracion y plantillas de observabilidad
-- `security/`: evidencias y artefactos de seguridad
-- `terraform/local/`: infraestructura local para pruebas
-- `terraform/aws/`: infraestructura en AWS para entrega
-- `terraform/README.md`: guía general de ambientes Terraform
-- `.github/workflows/`: pipeline modular
-- `docs/`: evidencias (capturas/reportes)
+```text
+pin/
+├── .github/
+│   └── workflows/
+├── app/
+│   ├── src/
+│   │   ├── app.js
+│   │   └── server.js
+│   ├── test/
+│   │   └── app.test.js
+│   ├── Dockerfile
+│   ├── eslint.config.js
+│   ├── package.json
+│   └── README.md
+├── monitoring/
+│   ├── templates/
+│   │   ├── docker-compose.yml.tftpl
+│   │   └── prometheus.yml.tftpl
+│   ├── docker-compose.yml
+│   ├── prometheus.yml
+│   └── README.md
+├── security/
+│   ├── sbom/
+│   ├── sonar/
+│   ├── snyk/
+│   └── README.md
+├── terraform/
+│   ├── aws/
+│   │   ├── main.tf
+│   │   ├── providers.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── user_data.sh.tftpl
+│   │   ├── terraform.tfvars.example
+│   │   └── README.md
+│   ├── local/
+│   │   ├── main.tf
+│   │   ├── providers.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── terraform.tfvars.example
+│   │   └── README.md
+│   └── README.md
+├── docs/
+│   ├── architecture/
+│   ├── screenshots/
+│   ├── video/
+│   ├── entregables.md
+│   └── README.md
+├── consigna.md
+├── paso-a-paso-proyecto1.md
+└── README.md
+```
 
 ## Función de cada módulo
 
