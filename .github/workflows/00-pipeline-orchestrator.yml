@@ -36,3 +36,7 @@ jobs:
     with:
       image_ref: ${{ needs.ci_docker.outputs.image_ref }}
     secrets: inherit
+  ci_destroy_aws:
+    name: Deploy AWS Terraform
+    uses: ./.github/workflows/41-pipeline-destroy-aws.yml
+    secrets: inherit
