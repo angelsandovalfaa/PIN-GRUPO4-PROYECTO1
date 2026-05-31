@@ -12,8 +12,8 @@ mkdir -p /opt/pin/prometheus
 GHCR_USERNAME='${ghcr_username}'
 GHCR_TOKEN='${ghcr_token}'
 
-if [ -n "${GHCR_USERNAME}" ] && [ -n "${GHCR_TOKEN}" ]; then
-  echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+if [ -n "$${GHCR_USERNAME}" ] && [ -n "$${GHCR_TOKEN}" ]; then
+  echo "$${GHCR_TOKEN}" | docker login ghcr.io -u "$${GHCR_USERNAME}" --password-stdin
 fi
 
 cat > /opt/pin/prometheus/prometheus.yml <<'PROM'
