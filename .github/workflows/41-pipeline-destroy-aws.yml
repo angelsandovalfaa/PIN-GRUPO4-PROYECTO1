@@ -1,18 +1,25 @@
-name: Reusable CI Deploy AWS
+name: Destroy AWS Infrastructure
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
-      image_ref:
+      confirm_destroy:
+        description: "Escribe DESTROY para eliminar toda la infraestructura"
         required: true
         type: string
 
 jobs:
-  deploy:
+  destroy:
+    name: Terraform Destroy AWS
     runs-on: ubuntu-latest
+    #environment:
+    #  name: production-destroy
+    if: github.event.inputs.confirm_destroy == 'DESTROY'
+
     defaults:
       run:
         working-directory: terraform/aws
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,19 +34,12 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform init
+      - name: Terraform Init
         run: terraform init
 
-      - name: Terraform plan
-        run: terraform plan -input=false -var="app_image=${{ inputs.image_ref }}"
+      - name: Terraform Destroy
+        run: terraform destroy -input=false -auto-approve
         env:
           TF_VAR_grafana_admin_password: ${{ secrets.ADMIN_PASSWORD }}
           TF_VAR_key_name: ${{ secrets.AWS_KEY_NAME }}
           TF_VAR_project_name: ${{ secrets.EC2_PROJECT_NAME }}
-
-
-      - name: Terraform apply
-        run: terraform apply -input=false -auto-approve -var="app_image=${{ inputs.image_ref }}"
-        env:
-          TF_VAR_grafana_admin_password: ${{ secrets.ADMIN_PASSWORD }}
-          TF_VAR_key_name: ${{ secrets.AWS_KEY_NAME }}
