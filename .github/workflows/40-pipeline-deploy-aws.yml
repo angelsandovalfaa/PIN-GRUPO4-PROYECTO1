@@ -28,7 +28,13 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform init
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
+            -backend-config="encrypt=true"
 
       - name: Terraform plan
         run: terraform plan -input=false -var="app_image=${{ inputs.image_ref }}"
@@ -43,3 +49,4 @@ jobs:
         env:
           TF_VAR_grafana_admin_password: ${{ secrets.ADMIN_PASSWORD }}
           TF_VAR_key_name: ${{ secrets.AWS_KEY_NAME }}
+          TF_VAR_project_name: ${{ secrets.EC2_PROJECT_NAME }}

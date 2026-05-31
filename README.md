@@ -226,6 +226,10 @@ Outputs esperados:
 - `AWS_REGION`
 - `AWS_KEY_NAME`
 - `ADMIN_PASSWORD` (Grafana admin)
+- `EC2_PROJECT_NAME`
+- `TF_STATE_BUCKET` (S3 bucket para backend remoto de Terraform)
+- `TF_STATE_KEY` (ruta/objeto del tfstate en S3, por ejemplo `pin/aws/terraform.tfstate`)
+- `TF_LOCK_TABLE` (tabla DynamoDB para lock de estado)
 - `SNYK_TOKEN`
 - `GITHUB_TOKEN` (automatico, para login/push a GHCR)
 

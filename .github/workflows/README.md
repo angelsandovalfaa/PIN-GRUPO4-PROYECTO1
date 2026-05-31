@@ -66,5 +66,9 @@ Pipeline modular de GitHub Actions.
 - `AWS_REGION`
 - `AWS_KEY_NAME`
 - `ADMIN_PASSWORD`
+- `EC2_PROJECT_NAME`
+- `TF_STATE_BUCKET`
+- `TF_STATE_KEY`
+- `TF_LOCK_TABLE`
 - `SNYK_TOKEN`
 - `GITHUB_TOKEN` (automatico para GHCR)
