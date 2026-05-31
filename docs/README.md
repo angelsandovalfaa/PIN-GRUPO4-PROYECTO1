@@ -1,9 +1,18 @@
-# Evidencias
+# docs/
 
-Colocar aqui las capturas para la entrega final:
+## Funcion principal
 
-- `pipeline-ok.png`
-- `terraform-apply.png`
-- `app-ok.png`
-- `grafana-dashboard.png`
-- `security-sbom.png`
+Almacenar evidencias de ejecucion para la entrega del PIN.
+
+## Archivos esperados
+
+- `pipeline-ok.png`: ejecucion CI/CD en verde.
+- `terraform-apply.png`: apply exitoso.
+- `app-ok.png`: app respondiendo.
+- `grafana-dashboard.png`: tablero con metricas.
+- `security-sbom.png`: evidencia de seguridad y/o SBOM.
+
+## Vinculos
+
+- Estas capturas respaldan los criterios de la rubrica (pipeline, infraestructura, seguridad, observabilidad, documentacion).
+- El README raiz referencia esta carpeta para la entrega final.

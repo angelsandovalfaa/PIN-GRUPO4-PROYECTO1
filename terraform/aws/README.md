@@ -1,36 +1,20 @@
-# Terraform PIN - AWS
+# terraform/aws/
 
-Infraestructura base para el Proyecto 1 (PIN) en AWS:
-- VPC y subnet pública
-- Internet Gateway y routing
-- Security Group (SSH + app + Prometheus + Grafana)
-- Instancia EC2 (Amazon Linux 2023)
-- Bootstrap por `user_data` para levantar Docker, app, Prometheus y Grafana
+## Funcion principal
+
+Provisionar infraestructura en AWS y levantar el stack de aplicacion/observabilidad en EC2.
 
 ## Archivos
-- `providers.tf`: provider AWS y versión de Terraform
-- `variables.tf`: variables de entrada
-- `main.tf`: recursos de red y EC2
-- `user_data.sh.tftpl`: script de bootstrap (render + compose up)
-- `../../compose/docker-compose.yml.tftpl`: stack modular de contenedores
-- `../../compose/prometheus.yml.tftpl`: scraping de app + observabilidad
-- `outputs.tf`: URLs y datos de salida
-- `terraform.tfvars.example`: ejemplo de variables
 
-## Uso
-1. Copiar variables:
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
-2. Editar `terraform.tfvars` (mínimo: `key_name` y `grafana_admin_password`).
-3. Ejecutar:
-   ```bash
-   terraform init
-   terraform plan
-   terraform apply
-   ```
+- `providers.tf`: versiones requeridas y provider AWS.
+- `variables.tf`: variables de entrada (red, puertos, credenciales, imagen app, etc.).
+- `main.tf`: recursos AWS (VPC, subnet, IGW, route table, SG, EC2) y render de plantillas de `compose/`.
+- `user_data.sh.tftpl`: bootstrap de EC2 (instala Docker/Compose y levanta stack).
+- `outputs.tf`: URLs de salida (`app_url`, `prometheus_url`, `grafana_url`).
+- `terraform.tfvars.example`: ejemplo de valores para crear `terraform.tfvars`.
 
-## Notas de seguridad
-- Restringir `allowed_cidr` a tu IP pública (`x.x.x.x/32`) y evitar `0.0.0.0/0` en producción.
-- Cambiar la password de Grafana por una fuerte.
-- Para endurecimiento extra, mover secretos a AWS SSM Parameter Store.
+## Vinculos
+
+- Consume `../../compose/docker-compose.yml.tftpl` y `../../compose/prometheus.yml.tftpl`.
+- Recibe `app_image` desde workflow `ci-docker.yml` (output `image_ref`) durante deploy.
+- Es ejecutado por `.github/workflows/ci-deploy-aws.yml`.

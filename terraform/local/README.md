@@ -1,30 +1,18 @@
-# Terraform Local
+# terraform/local/
 
-Levanta la misma arquitectura en tu maquina local usando Docker provider.
+## Funcion principal
 
-## Requisitos
+Levantar localmente el stack completo con Terraform + Docker provider para pruebas y validacion.
 
-- Terraform 1.5+
-- Docker Engine activo
+## Archivos
 
-## Uso
+- `providers.tf`: versiones requeridas y provider Docker.
+- `variables.tf`: parametros de puertos, credenciales de Grafana e imagen app.
+- `main.tf`: crea red, volumenes y contenedores (app, prometheus, grafana, cadvisor, node-exporter).
+- `outputs.tf`: URLs locales de acceso.
+- `terraform.tfvars.example`: valores ejemplo para entorno local.
 
-```bash
-cd terraform/local
-cp terraform.tfvars.example terraform.tfvars
-terraform init
-terraform plan
-terraform apply
-```
+## Vinculos
 
-## Endpoints
-
-- App: `http://localhost:8080`
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
-
-## Limpieza
-
-```bash
-terraform destroy
-```
+- Reutiliza `../../compose/prometheus.yml.tftpl` para configurar scraping.
+- Permite validar observabilidad y funcionalidad antes de desplegar en `terraform/aws`.

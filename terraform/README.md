@@ -1,23 +1,16 @@
-# Terraform - Ambientes
+# terraform/
 
-Esta carpeta esta modularizada por ambiente:
+## Funcion principal
 
-- `terraform/local`: entorno local con Docker provider para pruebas
-- `terraform/aws`: infraestructura en AWS para entrega en nube
+Define infraestructura como codigo separada por entorno para cumplir la consigna de opcion local y opcion nube.
 
-## Flujo recomendado
+## Subcarpetas
 
-1. Probar primero en local:
-   ```bash
-   cd terraform/local
-   cp terraform.tfvars.example terraform.tfvars
-   terraform init
-   terraform apply
-   ```
-2. Luego desplegar en AWS:
-   ```bash
-   cd terraform/aws
-   cp terraform.tfvars.example terraform.tfvars
-   terraform init
-   terraform apply
-   ```
+- `local/`: stack local con provider Docker.
+- `aws/`: infraestructura cloud en AWS.
+
+## Como se vinculan
+
+- Ambos entornos comparten plantillas desde `compose/` para mantener consistencia operativa.
+- El pipeline CI/CD despliega el entorno `aws/` en rama `main`.
+- El entorno `local/` se usa para pruebas rapidas previas sin costo cloud.
