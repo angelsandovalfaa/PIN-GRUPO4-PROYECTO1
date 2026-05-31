@@ -31,7 +31,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high --file=package.json
+          args: --severity-threshold=high --file=app/package.json
 
   sbom:
     runs-on: ubuntu-latest
