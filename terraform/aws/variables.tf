@@ -62,3 +62,16 @@ variable "grafana_admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "ghcr_username" {
+  description = "Usuario para autenticacion en GHCR (opcional)"
+  type        = string
+  default     = ""
+}
+
+variable "ghcr_token" {
+  description = "Token para autenticacion en GHCR (opcional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

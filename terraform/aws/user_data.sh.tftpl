@@ -9,6 +9,13 @@ usermod -aG docker ec2-user
 
 mkdir -p /opt/pin/prometheus
 
+GHCR_USERNAME='${ghcr_username}'
+GHCR_TOKEN='${ghcr_token}'
+
+if [ -n "${GHCR_USERNAME}" ] && [ -n "${GHCR_TOKEN}" ]; then
+  echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+fi
+
 cat > /opt/pin/prometheus/prometheus.yml <<'PROM'
 ${prometheus_config}
 PROM
@@ -18,4 +25,4 @@ ${docker_compose}
 COMPOSE
 
 cd /opt/pin
-docker compose up -d
+docker compose up -d 2>&1 | tee /var/log/pin-docker-compose.log

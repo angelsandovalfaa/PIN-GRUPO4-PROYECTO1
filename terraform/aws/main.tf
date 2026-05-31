@@ -126,6 +126,8 @@ resource "aws_instance" "pin" {
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
     prometheus_config = local.prometheus_config
     docker_compose    = local.docker_compose
+    ghcr_username     = var.ghcr_username
+    ghcr_token        = var.ghcr_token
   })
 
   tags = {

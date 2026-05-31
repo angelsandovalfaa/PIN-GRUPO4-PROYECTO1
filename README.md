@@ -230,6 +230,8 @@ Outputs esperados:
 - `TF_STATE_BUCKET` (S3 bucket para backend remoto de Terraform)
 - `TF_STATE_KEY` (ruta/objeto del tfstate en S3, por ejemplo `pin/aws/terraform.tfstate`)
 - `TF_LOCK_TABLE` (tabla DynamoDB para lock de estado)
+- `GHCR_USERNAME` (opcional, requerido si la imagen en GHCR es privada)
+- `GHCR_TOKEN` (opcional, requerido si la imagen en GHCR es privada)
 - `SNYK_TOKEN`
 - `GITHUB_TOKEN` (automatico, para login/push a GHCR)
 
