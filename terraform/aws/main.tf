@@ -8,7 +8,19 @@ data "aws_ami" "al2023" {
   }
 }
 
+data "aws_ec2_instance_type_offerings" "selected_type" {
+  location_type = "availability-zone"
+
+  filter {
+    name   = "instance-type"
+    values = [var.instance_type]
+  }
+}
+
 locals {
+  compatible_azs = sort(tolist(data.aws_ec2_instance_type_offerings.selected_type.locations))
+  selected_az    = var.availability_zone != "" ? var.availability_zone : local.compatible_azs[0]
+
   prometheus_config = templatefile("${path.module}/../../monitoring/templates/prometheus.yml.tftpl", {})
 
   docker_compose = templatefile("${path.module}/../../monitoring/templates/docker-compose.yml.tftpl", {
@@ -34,6 +46,7 @@ resource "aws_vpc" "this" {
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.this.id
   cidr_block              = "10.50.1.0/24"
+  availability_zone       = local.selected_az
   map_public_ip_on_launch = true
 
   tags = {

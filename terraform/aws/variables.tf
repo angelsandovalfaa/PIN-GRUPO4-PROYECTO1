@@ -16,6 +16,12 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
+variable "availability_zone" {
+  description = "Availability Zone para la subnet/instancia (opcional). Si esta vacia, se elige automaticamente una zona compatible con instance_type."
+  type        = string
+  default     = ""
+}
+
 variable "key_name" {
   description = "Nombre de key pair para SSH"
   type        = string
