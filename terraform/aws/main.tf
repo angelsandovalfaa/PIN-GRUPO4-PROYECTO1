@@ -117,6 +117,30 @@ resource "aws_security_group" "pin" {
     cidr_blocks = [var.allowed_cidr]
   }
 
+  ingress {
+    description = "cAdvisor"
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
+  }
+
+  ingress {
+    description = "Node Exporter"
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
+  }
+
+  ingress {
+    description = "ICMP (ping)"
+    from_port   = 8
+    to_port     = 0
+    protocol    = "icmp"
+    cidr_blocks = [var.allowed_cidr]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
