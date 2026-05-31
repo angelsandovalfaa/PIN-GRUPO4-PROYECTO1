@@ -123,11 +123,16 @@ Plantillas reutilizadas por ambos entornos (local y AWS):
 
 Pipeline modular por responsabilidad:
 
-- `00-pipeline-orchestrator.yml` (orquestador)
-- `10-pipeline-build-test.yml` (build + tests)
-- `20-pipeline-security-sbom.yml` (ESLint + Snyk + SBOM)
-- `30-pipeline-docker-publish.yml` (build/push a GHCR, output `image_ref`)
-- `40-pipeline-deploy-aws.yml` (terraform init/plan/apply en AWS)
+- `00-pipeline-orchestrator.yml` (orquestador):
+  - Servicio/proceso: GitHub Actions encadena workflows reusables en orden y controla permisos generales (`contents:read`, `packages:write`).
+- `10-pipeline-build-test.yml` (build + tests):
+  - Servicio/proceso: runner Ubuntu con Node.js 20 ejecuta `npm ci`, `npm run build` y `npm test` en `app/`.
+- `20-pipeline-security-sbom.yml` (ESLint + Snyk + SBOM):
+  - Servicio/proceso: runner Ubuntu ejecuta lint (`eslint`), escaneo de dependencias con Snyk (contenedor `snyk/snyk:node`) y generación de SBOM CycloneDX con `anchore/sbom-action`.
+- `30-pipeline-docker-publish.yml` (build/push a GHCR, output `image_ref`):
+  - Servicio/proceso: runner Ubuntu usa Docker Buildx para construir `app/Dockerfile` y publicar imagen en `ghcr.io`.
+- `40-pipeline-deploy-aws.yml` (terraform init/plan/apply en AWS):
+  - Servicio/proceso: runner Ubuntu configura credenciales AWS, ejecuta Terraform en `terraform/aws` y despliega EC2 + stack observabilidad usando la imagen publicada.
 
 Flujo: `build/test` -> `security/sbom` -> `docker` -> `deploy` (solo en `main`).
 
@@ -195,9 +200,11 @@ Outputs esperados:
 
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `AWS_KEY_NAME`
+- `ADMIN_PASSWORD` (Grafana admin)
 - `SNYK_TOKEN`
-
-Nota: GHCR usa `GITHUB_TOKEN` del workflow.
+- `GITHUB_TOKEN` (automatico, para login/push a GHCR)
 
 ## Evidencias para la entrega
 
