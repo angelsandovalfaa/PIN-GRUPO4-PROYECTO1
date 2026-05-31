@@ -78,11 +78,11 @@ Plantillas reutilizadas por ambos entornos (local y AWS):
 
 Pipeline modular por responsabilidad:
 
-- `pipeline-orchestrator.yml` (orquestador)
-- `pipeline-build-test.yml` (build + tests)
-- `pipeline-security-sbom.yml` (ESLint + Snyk + SBOM)
-- `pipeline-docker-publish.yml` (build/push a GHCR, output `image_ref`)
-- `pipeline-deploy-aws.yml` (terraform init/plan/apply en AWS)
+- `00-pipeline-orchestrator.yml` (orquestador)
+- `10-pipeline-build-test.yml` (build + tests)
+- `20-pipeline-security-sbom.yml` (ESLint + Snyk + SBOM)
+- `30-pipeline-docker-publish.yml` (build/push a GHCR, output `image_ref`)
+- `40-pipeline-deploy-aws.yml` (terraform init/plan/apply en AWS)
 
 Flujo: `build/test` -> `security/sbom` -> `docker` -> `deploy` (solo en `main`).
 

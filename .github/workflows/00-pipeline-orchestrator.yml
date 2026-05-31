@@ -9,26 +9,26 @@ on:
 jobs:
   ci_build_test:
     name: Build and Test
-    uses: ./.github/workflows/pipeline-build-test.yml
+    uses: ./.github/workflows/10-pipeline-build-test.yml
     secrets: inherit
 
   ci_security_sbom:
     name: Security and SBOM
     needs: ci_build_test
-    uses: ./.github/workflows/pipeline-security-sbom.yml
+    uses: ./.github/workflows/20-pipeline-security-sbom.yml
     secrets: inherit
 
   ci_docker:
     name: Docker Build and Push
     needs: ci_security_sbom
-    uses: ./.github/workflows/pipeline-docker-publish.yml
+    uses: ./.github/workflows/30-pipeline-docker-publish.yml
     secrets: inherit
 
   ci_deploy_aws:
     name: Deploy AWS Terraform
     if: github.ref == 'refs/heads/main'
     needs: ci_docker
-    uses: ./.github/workflows/pipeline-deploy-aws.yml
+    uses: ./.github/workflows/40-pipeline-deploy-aws.yml
     with:
       image_ref: ${{ needs.ci_docker.outputs.image_ref }}
     secrets: inherit
