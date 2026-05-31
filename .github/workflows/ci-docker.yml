@@ -1,0 +1,39 @@
+name: Reusable CI Docker
+
+on:
+  workflow_call:
+    outputs:
+      image_ref:
+        description: Imagen construida y publicada
+        value: ${{ jobs.docker.outputs.image_ref }}
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    outputs:
+      image_ref: ${{ steps.meta.outputs.image_ref }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set short SHA
+        id: meta
+        run: |
+          TAG=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          IMAGE_REF="ghcr.io/${GITHUB_REPOSITORY_OWNER}/pin-app:${TAG}"
+          echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.image_ref }}

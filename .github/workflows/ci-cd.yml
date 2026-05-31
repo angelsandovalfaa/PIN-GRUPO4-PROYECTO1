@@ -1,0 +1,34 @@
+name: CI-CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci_build_test:
+    name: Build and Test
+    uses: ./.github/workflows/ci-build-test.yml
+    secrets: inherit
+
+  ci_security_sbom:
+    name: Security and SBOM
+    needs: ci_build_test
+    uses: ./.github/workflows/ci-security-sbom.yml
+    secrets: inherit
+
+  ci_docker:
+    name: Docker Build and Push
+    needs: ci_security_sbom
+    uses: ./.github/workflows/ci-docker.yml
+    secrets: inherit
+
+  ci_deploy_aws:
+    name: Deploy AWS Terraform
+    if: github.ref == 'refs/heads/main'
+    needs: ci_docker
+    uses: ./.github/workflows/ci-deploy-aws.yml
+    with:
+      image_ref: ${{ needs.ci_docker.outputs.image_ref }}
+    secrets: inherit

@@ -1,0 +1,65 @@
+services:
+  pin-app:
+    image: ${app_image}
+    container_name: pin-app
+    restart: unless-stopped
+    networks:
+      - pin-network
+    ports:
+      - "${app_external_port}:80"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pin-prometheus
+    restart: unless-stopped
+    networks:
+      - pin-network
+    ports:
+      - "${prometheus_external_port}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pin-grafana
+    restart: unless-stopped
+    networks:
+      - pin-network
+    ports:
+      - "${grafana_external_port}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${grafana_admin_user}
+      GF_SECURITY_ADMIN_PASSWORD: ${grafana_admin_password}
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: pin-cadvisor
+    restart: unless-stopped
+    networks:
+      - pin-network
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: pin-node-exporter
+    restart: unless-stopped
+    networks:
+      - pin-network
+    ports:
+      - "9100:9100"
+
+networks:
+  pin-network:
+    name: pin-network
+
+volumes:
+  grafana-data:
+    name: pin-grafana-data

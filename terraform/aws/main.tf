@@ -8,6 +8,19 @@ data "aws_ami" "al2023" {
   }
 }
 
+locals {
+  prometheus_config = templatefile("${path.module}/../../compose/prometheus.yml.tftpl", {})
+
+  docker_compose = templatefile("${path.module}/../../compose/docker-compose.yml.tftpl", {
+    app_image                = var.app_image
+    app_external_port        = var.app_external_port
+    prometheus_external_port = var.prometheus_external_port
+    grafana_external_port    = var.grafana_external_port
+    grafana_admin_user       = var.grafana_admin_user
+    grafana_admin_password   = var.grafana_admin_password
+  })
+}
+
 resource "aws_vpc" "this" {
   cidr_block           = "10.50.0.0/16"
   enable_dns_hostnames = true
@@ -111,12 +124,8 @@ resource "aws_instance" "pin" {
   key_name               = var.key_name
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    app_image                = var.app_image
-    app_external_port        = var.app_external_port
-    prometheus_external_port = var.prometheus_external_port
-    grafana_external_port    = var.grafana_external_port
-    grafana_admin_user       = var.grafana_admin_user
-    grafana_admin_password   = var.grafana_admin_password
+    prometheus_config = local.prometheus_config
+    docker_compose    = local.docker_compose
   })
 
   tags = {

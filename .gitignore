@@ -1,0 +1,12 @@
+# Terraform local state/cache
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.*
+terraform/**/crash.log
+
+# Node
+app/node_modules/
+
+# OS/editor
+.DS_Store
+.vscode/

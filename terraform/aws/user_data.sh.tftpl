@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y docker docker-compose-plugin
+systemctl enable docker
+systemctl start docker
+usermod -aG docker ec2-user
+
+mkdir -p /opt/pin/prometheus
+
+cat > /opt/pin/prometheus/prometheus.yml <<'PROM'
+${prometheus_config}
+PROM
+
+cat > /opt/pin/docker-compose.yml <<'COMPOSE'
+${docker_compose}
+COMPOSE
+
+cd /opt/pin
+docker compose up -d
