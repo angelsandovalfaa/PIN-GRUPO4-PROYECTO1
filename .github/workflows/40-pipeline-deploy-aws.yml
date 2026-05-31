@@ -22,7 +22,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -31,7 +31,13 @@ jobs:
         run: terraform init
 
       - name: Terraform plan
-        run: terraform plan -var="app_image=${{ inputs.image_ref }}"
+        run: terraform plan -input=false -var="app_image=${{ inputs.image_ref }}"
+        env:
+          TF_VAR_grafana_admin_password: ${{ secrets.ADMIN_PASSWORD }}
+          TF_VAR_key_name: ${{ secrets.AWS_KEY_NAME }}
 
       - name: Terraform apply
-        run: terraform apply -auto-approve -var="app_image=${{ inputs.image_ref }}"
+        run: terraform apply -input=false -auto-approve -var="app_image=${{ inputs.image_ref }}"
+        env:
+          TF_VAR_grafana_admin_password: ${{ secrets.ADMIN_PASSWORD }}
+          TF_VAR_key_name: ${{ secrets.AWS_KEY_NAME }}
