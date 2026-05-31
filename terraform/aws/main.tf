@@ -9,9 +9,9 @@ data "aws_ami" "al2023" {
 }
 
 locals {
-  prometheus_config = templatefile("${path.module}/../../compose/prometheus.yml.tftpl", {})
+  prometheus_config = templatefile("${path.module}/../../monitoring/templates/prometheus.yml.tftpl", {})
 
-  docker_compose = templatefile("${path.module}/../../compose/docker-compose.yml.tftpl", {
+  docker_compose = templatefile("${path.module}/../../monitoring/templates/docker-compose.yml.tftpl", {
     app_image                = var.app_image
     app_external_port        = var.app_external_port
     prometheus_external_port = var.prometheus_external_port

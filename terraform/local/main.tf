@@ -42,7 +42,7 @@ resource "docker_container" "prometheus" {
   }
 
   upload {
-    content = templatefile("${path.module}/../../compose/prometheus.yml.tftpl", {})
+    content = templatefile("${path.module}/../../monitoring/templates/prometheus.yml.tftpl", {})
     file    = "/etc/prometheus/prometheus.yml"
   }
 }

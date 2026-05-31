@@ -26,7 +26,8 @@ Construir un flujo completo que:
 ## Estructura del repositorio
 
 - `app/`: aplicación Node.js
-- `compose/`: plantillas compartidas de observabilidad/compose
+- `monitoring/`: configuracion y plantillas de observabilidad
+- `security/`: evidencias y artefactos de seguridad
 - `terraform/local/`: infraestructura local para pruebas
 - `terraform/aws/`: infraestructura en AWS para entrega
 - `terraform/README.md`: guía general de ambientes Terraform
@@ -44,20 +45,25 @@ Construir un flujo completo que:
 - Incluye tests unitarios y lint.
 - Tiene `Dockerfile` reproducible para publicar imagen.
 
-### 2) Compose (`compose/`)
+### 2) Monitoring (`monitoring/`)
 
 Plantillas reutilizadas por ambos entornos (local y AWS):
 
-- `docker-compose.yml.tftpl`: define servicios `pin-app`, `prometheus`, `grafana`, `cadvisor`, `node-exporter`.
-- `prometheus.yml.tftpl`: targets de scraping de app y componentes de observabilidad.
+- `templates/docker-compose.yml.tftpl`: define servicios `pin-app`, `prometheus`, `grafana`, `cadvisor`, `node-exporter`.
+- `templates/prometheus.yml.tftpl`: targets de scraping de app y componentes de observabilidad.
 
-### 3) Terraform Local (`terraform/local/`)
+### 3) Security (`security/`)
+
+- Carpeta de soporte para guardar SBOM y evidencias de escaneo (Snyk/Sonar).
+- Facilita demostrar el criterio de seguridad de la rubrica.
+
+### 4) Terraform Local (`terraform/local/`)
 
 - Levanta el stack completo en tu máquina usando provider Docker.
 - Sirve para validar rápido la solución sin consumir AWS.
 - Ideal para pruebas funcionales y demo previa.
 
-### 4) Terraform AWS (`terraform/aws/`)
+### 5) Terraform AWS (`terraform/aws/`)
 
 - Crea infraestructura en nube:
   - VPC
@@ -65,18 +71,18 @@ Plantillas reutilizadas por ambos entornos (local y AWS):
   - Internet Gateway + route table
   - Security Group
   - EC2
-- `user_data` instala Docker/Compose y levanta el stack usando las plantillas de `compose/`.
+- `user_data` instala Docker/Compose y levanta el stack usando plantillas de `monitoring/`.
 - Recibe `app_image` para desplegar la imagen versionada desde CI.
 
-### 5) Workflows GitHub (`.github/workflows/`)
+### 6) Workflows GitHub (`.github/workflows/`)
 
 Pipeline modular por responsabilidad:
 
-- `ci-cd.yml` (orquestador)
-- `ci-build-test.yml` (build + tests)
-- `ci-security-sbom.yml` (ESLint + Snyk + SBOM)
-- `ci-docker.yml` (build/push a GHCR, output `image_ref`)
-- `ci-deploy-aws.yml` (terraform init/plan/apply en AWS)
+- `pipeline-orchestrator.yml` (orquestador)
+- `pipeline-build-test.yml` (build + tests)
+- `pipeline-security-sbom.yml` (ESLint + Snyk + SBOM)
+- `pipeline-docker-publish.yml` (build/push a GHCR, output `image_ref`)
+- `pipeline-deploy-aws.yml` (terraform init/plan/apply en AWS)
 
 Flujo: `build/test` -> `security/sbom` -> `docker` -> `deploy` (solo en `main`).
 

@@ -14,5 +14,5 @@ Levantar localmente el stack completo con Terraform + Docker provider para prueb
 
 ## Vinculos
 
-- Reutiliza `../../compose/prometheus.yml.tftpl` para configurar scraping.
+- Reutiliza `../../monitoring/templates/prometheus.yml.tftpl` para configurar scraping.
 - Permite validar observabilidad y funcionalidad antes de desplegar en `terraform/aws`.
