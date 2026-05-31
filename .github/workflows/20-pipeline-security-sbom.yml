@@ -26,6 +26,15 @@ jobs:
       - name: ESLint
         run: npm run lint
 
+      - name: Validate SNYK_TOKEN
+        run: |
+          if [ -z "${SNYK_TOKEN}" ]; then
+            echo "SNYK_TOKEN no esta configurado en GitHub Secrets."
+            exit 1
+          fi
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
       - name: Snyk test
         uses: snyk/actions/node@master
         env:
