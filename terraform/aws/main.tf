@@ -23,10 +23,10 @@ locals {
 
   prometheus_config = templatefile("${path.module}/../../monitoring/templates/prometheus.yml.tftpl", {})
 
-  dashboard_json = file("${path.module}/../../monitoring/dashboard.json")
+  dashboard_json = replace(file("${path.module}/../../monitoring/dashboard.json"), "$", "$$")
 
-  provisioning_dashboards_yml = file("${path.module}/../../monitoring/provisioning/dashboards/dashboards.yml")
-  provisioning_datasources_yml = file("${path.module}/../../monitoring/provisioning/datasources/prometheus.yml")
+  provisioning_dashboards_yml = replace(file("${path.module}/../../monitoring/provisioning/dashboards/dashboards.yml"), "$", "$$")
+  provisioning_datasources_yml = replace(file("${path.module}/../../monitoring/provisioning/datasources/prometheus.yml"), "$", "$$")
 
   docker_compose = templatefile("${path.module}/../../monitoring/templates/docker-compose.yml.tftpl", {
     app_image                = var.app_image
