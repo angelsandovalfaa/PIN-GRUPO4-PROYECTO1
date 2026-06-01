@@ -23,6 +23,11 @@ locals {
 
   prometheus_config = templatefile("${path.module}/../../monitoring/templates/prometheus.yml.tftpl", {})
 
+  dashboard_json = replace(file("${path.module}/../../monitoring/dashboard.json"), "$", "$$")
+
+  provisioning_dashboards_yml = replace(file("${path.module}/../../monitoring/provisioning/dashboards/dashboards.yml"), "$", "$$")
+  provisioning_datasources_yml = replace(file("${path.module}/../../monitoring/provisioning/datasources/prometheus.yml"), "$", "$$")
+
   docker_compose = templatefile("${path.module}/../../monitoring/templates/docker-compose.yml.tftpl", {
     app_image                = var.app_image
     app_external_port        = var.app_external_port
@@ -160,12 +165,15 @@ resource "aws_instance" "pin" {
   vpc_security_group_ids = [aws_security_group.pin.id]
   key_name               = var.key_name
 
-  user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    prometheus_config = local.prometheus_config
-    docker_compose    = local.docker_compose
-    ghcr_username     = var.ghcr_username
-    ghcr_token        = var.ghcr_token
-  })
+  user_data_base64 = base64encode(templatefile("${path.module}/user_data.sh.tftpl", {
+    prometheus_config        = local.prometheus_config
+    docker_compose           = local.docker_compose
+    dashboard_json           = local.dashboard_json
+    provisioning_dashboards  = local.provisioning_dashboards_yml
+    provisioning_datasources = local.provisioning_datasources_yml
+    ghcr_username            = var.ghcr_username
+    ghcr_token               = var.ghcr_token
+  }))
 
   tags = {
     Name = "${var.project_name}-ec2"

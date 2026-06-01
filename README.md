@@ -166,7 +166,6 @@ Pipeline modular por responsabilidad:
     - Inyecta variables sensibles con secrets (`TF_VAR_grafana_admin_password`, `TF_VAR_key_name`, `TF_VAR_project_name`, `TF_VAR_ghcr_username`, `TF_VAR_ghcr_token`).
   - Resultado: Elimina la infraestructura creada en AWS. Nota: No elimina el bucket s3 que almacena el estado de terraform.
 
-
 Flujo: `build/test` -> `security/sbom` -> `docker` -> `deploy` (solo en `main`).
 
 ## Ejecución local de app
