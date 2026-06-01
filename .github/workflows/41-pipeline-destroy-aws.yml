@@ -12,6 +12,9 @@ jobs:
   destroy:
     name: Terraform Destroy AWS
     runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-aws-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
     #environment:
     #  name: production-destroy
     if: github.event.inputs.confirm_destroy == 'DESTROY'
