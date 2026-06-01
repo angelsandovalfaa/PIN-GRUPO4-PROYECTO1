@@ -1,5 +1,6 @@
 const express = require('express');
 const client = require('prom-client');
+const { setTimeout } = require('node:timers/promises');
 const path = require('path');
 const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
@@ -69,7 +70,7 @@ function createApp() {
   app.get('/', async (req, res) => {
     const end = httpRequestDuration.startTimer();
     const delay = req.query.delay ? parseInt(req.query.delay, 10) : Math.random() * 300;
-    await new Promise((r) => setTimeout(r, delay));
+    await setTimeout(delay);
     res.json({ ok: true, delay: Math.round(delay) });
     end({ method: req.method, route: '/', code: 200 });
     httpRequestsTotal.inc({ method: req.method, route: '/', status_code: '200' });
