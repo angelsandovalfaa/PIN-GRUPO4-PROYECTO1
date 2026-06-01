@@ -35,10 +35,12 @@ jobs:
           test -n "${TF_STATE_BUCKET}" || (echo "Falta secret TF_STATE_BUCKET" && exit 1)
           test -n "${TF_STATE_KEY}" || (echo "Falta secret TF_STATE_KEY" && exit 1)
           test -n "${TF_LOCK_TABLE}" || (echo "Falta secret TF_LOCK_TABLE" && exit 1)
+          test -n "${EC2_PROJECT_NAME}" || (echo "Falta secret EC2_PROJECT_NAME" && exit 1)
         env:
           TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
           TF_STATE_KEY: ${{ secrets.TF_STATE_KEY }}
           TF_LOCK_TABLE: ${{ secrets.TF_LOCK_TABLE }}
+          EC2_PROJECT_NAME: ${{ secrets.EC2_PROJECT_NAME }}
 
       - name: Terraform init
         run: |

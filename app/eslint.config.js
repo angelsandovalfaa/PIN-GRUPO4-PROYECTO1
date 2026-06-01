@@ -28,5 +28,16 @@ module.exports = [
         after: 'readonly'
       }
     }
+  },
+  {
+    files: ['public/**/*.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        document: 'readonly',
+        fetch: 'readonly',
+        window: 'readonly'
+      }
+    }
   }
 ];

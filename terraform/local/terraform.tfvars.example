@@ -1,7 +1,7 @@
 app_image                  = "pin-app:local"
 grafana_admin_user         = "admin"
 grafana_admin_password     = "CambiarEstaPassword123!"
-app_external_port          = 8080
+app_external_port          = 80
 prometheus_external_port   = 9090
 grafana_external_port      = 3000
 cadvisor_external_port     = 8081

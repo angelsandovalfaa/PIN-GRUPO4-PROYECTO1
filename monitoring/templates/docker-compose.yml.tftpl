@@ -3,6 +3,8 @@ services:
     image: ${app_image}
     container_name: pin-app
     restart: unless-stopped
+    environment:
+      PORT: "80"
     networks:
       - pin-network
     ports:
