@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PIN Project Overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape bg-shape-a"></div>
+    <div class="bg-shape bg-shape-b"></div>
+
+    <main class="layout">
+      <section class="hero">
+        <p class="eyebrow">PIN · Proyecto de Infra + Observabilidad</p>
+        <h1>Arquitectura viva del proyecto</h1>
+        <p class="lead">
+          Esta vista muestra cómo está armado el stack y te da acceso directo a cada servicio
+          desplegado: aplicación, métricas y observabilidad.
+        </p>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Cómo está armado</h2>
+          <ul>
+            <li><strong>Terraform</strong>: provisiona red, seguridad e instancia EC2.</li>
+            <li><strong>Docker Compose</strong>: levanta los contenedores del stack.</li>
+            <li><strong>App Node.js</strong>: expone endpoints `/`, `/health`, `/metrics`.</li>
+            <li><strong>Prometheus</strong>: scrapea métricas del ecosistema.</li>
+            <li><strong>Grafana</strong>: visualiza dashboards y estado operativo.</li>
+            <li><strong>cAdvisor + Node Exporter</strong>: métricas de contenedores y host.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h2>Flujo de observabilidad</h2>
+          <div class="flow">
+            <span>pin-app</span>
+            <span>prom-client</span>
+            <span>Prometheus</span>
+            <span>Grafana</span>
+          </div>
+          <p class="small">La app publica métricas en <code>/metrics</code>, Prometheus las recopila y Grafana las presenta.</p>
+        </article>
+      </section>
+
+      <section class="services">
+        <div class="section-head">
+          <h2>Servicios levantados</h2>
+          <button id="refreshBtn" type="button">Actualizar estado</button>
+        </div>
+        <div id="servicesGrid" class="services-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="/static/project.js" defer></script>
+  </body>
+</html>

@@ -28,3 +28,21 @@ test('GET /metrics expone http_requests_total', async () => {
   assert.equal(res.status, 200);
   assert.match(res.text, /http_requests_total/);
 });
+
+test('GET /project entrega html', async () => {
+  const app = createApp();
+  const res = await request(app).get('/project');
+
+  assert.equal(res.status, 200);
+  assert.match(res.headers['content-type'], /text\/html/);
+});
+
+test('GET /project/services entrega urls de servicios', async () => {
+  const app = createApp();
+  const res = await request(app).get('/project/services');
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.project, 'pin');
+  assert.ok(Array.isArray(res.body.services));
+  assert.equal(res.body.services.length, 5);
+});
