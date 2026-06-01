@@ -15,6 +15,7 @@ resource "docker_container" "app" {
   image = docker_image.app.image_id
 
   restart = "unless-stopped"
+  env     = ["PORT=80"]
 
   networks_advanced {
     name = docker_network.pin.name
