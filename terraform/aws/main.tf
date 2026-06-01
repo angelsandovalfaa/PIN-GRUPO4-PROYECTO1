@@ -165,7 +165,7 @@ resource "aws_instance" "pin" {
   vpc_security_group_ids = [aws_security_group.pin.id]
   key_name               = var.key_name
 
-  user_data_base64 = base64encode(templatefile("${path.module}/user_data.sh.tftpl", {
+  user_data_base64 = base64gzip(templatefile("${path.module}/user_data.sh.tftpl", {
     prometheus_config        = local.prometheus_config
     docker_compose           = local.docker_compose
     dashboard_json           = local.dashboard_json
