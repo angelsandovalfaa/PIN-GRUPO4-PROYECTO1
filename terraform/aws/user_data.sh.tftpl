@@ -44,6 +44,21 @@ cat > /opt/pin/prometheus/prometheus.yml <<'PROM'
 ${prometheus_config}
 PROM
 
+mkdir -p /opt/pin/provisioning/dashboards
+mkdir -p /opt/pin/provisioning/datasources
+
+cat > /opt/pin/dashboard.json <<'DASHBOARD'
+${dashboard_json}
+DASHBOARD
+
+cat > /opt/pin/provisioning/dashboards/dashboards.yml <<'PROVDASH'
+${provisioning_dashboards}
+PROVDASH
+
+cat > /opt/pin/provisioning/datasources/prometheus.yml <<'PROVDATA'
+${provisioning_datasources}
+PROVDATA
+
 cat > /opt/pin/docker-compose.yml <<'COMPOSE'
 ${docker_compose}
 COMPOSE
