@@ -31,15 +31,6 @@ systemctl enable docker
 systemctl start docker
 usermod -aG docker ec2-user
 
-# Reserve swap to reduce OOM kills on small EC2 sizes when running observability stack.
-if ! swapon --show | grep -q "/swapfile"; then
-  fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
-  chmod 600 /swapfile
-  mkswap /swapfile
-  swapon /swapfile
-  grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
-fi
-
 mkdir -p /opt/pin/prometheus
 
 GHCR_USERNAME='${ghcr_username}'
