@@ -3,13 +3,13 @@ const assert = require('node:assert/strict');
 const request = require('supertest');
 const { createApp } = require('../src/app');
 
-test('GET / responde estado ok', async () => {
+test('GET / responde ok con delay', async () => {
   const app = createApp();
-  const res = await request(app).get('/');
+  const res = await request(app).get('/').query({ delay: 10 });
 
   assert.equal(res.status, 200);
-  assert.equal(res.body.service, 'pin-app');
-  assert.equal(res.body.status, 'ok');
+  assert.equal(res.body.ok, true);
+  assert.equal(res.body.delay, 10);
 });
 
 test('GET /health responde healthy', async () => {
@@ -27,4 +27,5 @@ test('GET /metrics expone http_requests_total', async () => {
   const res = await request(app).get('/metrics');
   assert.equal(res.status, 200);
   assert.match(res.text, /http_requests_total/);
+  assert.match(res.text, /http_request_duration_seconds/);
 });
