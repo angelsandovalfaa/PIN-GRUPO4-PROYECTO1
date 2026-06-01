@@ -18,3 +18,8 @@ Provisionar infraestructura en AWS y levantar el stack de aplicacion/observabili
 - Consume `../../monitoring/templates/docker-compose.yml.tftpl` y `../../monitoring/templates/prometheus.yml.tftpl`.
 - Recibe `app_image` desde workflow `ci-docker.yml` (output `image_ref`) durante deploy.
 - Es ejecutado por `.github/workflows/ci-deploy-aws.yml`.
+
+## Notas operativas
+
+- Para evitar cuelgues de Grafana por falta de memoria, se recomienda `instance_type = "t3.small"` o superior.
+- El `user_data` crea un swapfile de 2GB para estabilizar el stack en instancias chicas.
