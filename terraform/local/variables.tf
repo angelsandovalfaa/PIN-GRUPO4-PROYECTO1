@@ -7,7 +7,7 @@ variable "app_image" {
 variable "app_external_port" {
   description = "Puerto publico de la app"
   type        = number
-  default     = 8080
+  default     = 80
 }
 
 variable "prometheus_external_port" {
