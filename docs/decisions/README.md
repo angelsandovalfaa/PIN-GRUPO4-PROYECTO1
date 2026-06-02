@@ -24,6 +24,9 @@ no lleva ADR: vive en el README o en un comentario inline.
 |---|---|
 | [0001](0001-weather-proxy-open-meteo-redis-cache.md) | Proxy de clima a Open-Meteo con cache Redis opcional y degradacion elegante |
 | [0002](0002-network-exposure-auth-over-ip-allowlist.md) | Exposicion de red: autenticacion sobre allowlist de IP, servicios internos no expuestos, SSH por SSM |
+| [0003](0003-rollback-redeploy-imagen-previa.md) | Rollback por redeploy de una imagen previa de GHCR, reusando el deploy, sin rebuild |
+| [0004](0004-backend-remoto-como-iac-modulo-bootstrap.md) | Backend remoto de Terraform (S3 + lock DynamoDB) como IaC, con modulo bootstrap de state local |
+| [0005](0005-mejoras-diferidas-oidc-y-guard-de-rebuild.md) | Mejoras diferidas deliberadamente: OIDC para AWS y guard de rebuild de imagen |
 
 ## Formato
 
