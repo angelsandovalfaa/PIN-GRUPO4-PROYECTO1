@@ -1,0 +1,10 @@
+# Normaliza fines de linea a LF en el repo (evita el churn CRLF/LF entre
+# Windows y Mac/Linux). Los binarios quedan intactos.
+* text=auto eol=lf
+
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
