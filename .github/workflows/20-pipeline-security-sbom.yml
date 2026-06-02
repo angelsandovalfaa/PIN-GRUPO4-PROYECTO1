@@ -27,7 +27,13 @@ jobs:
       - name: ESLint
         run: npm run lint
 
+      # Snyk se saltea en PRs de dependabot: GitHub no expone los secrets de
+      # Actions a esos runs por seguridad, asi que SNYK_TOKEN llega vacio. Antes
+      # esto hacia fallar el job a todos los PRs de dependabot. ESLint y el resto
+      # del pipeline igual corren. En PRs normales y en push a main el token si
+      # esta, y aca sigue siendo gate duro (validacion + scan).
       - name: Validate SNYK_TOKEN
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         run: |
           if [ -z "${SNYK_TOKEN}" ]; then
             echo "SNYK_TOKEN no esta configurado en GitHub Secrets."
@@ -37,6 +43,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Snyk test
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         uses: snyk/actions/node@8e119fbb6c251787721d34ba683ed48eba792766 # master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

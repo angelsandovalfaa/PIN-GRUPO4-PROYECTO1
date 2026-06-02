@@ -38,7 +38,12 @@ jobs:
         working-directory: app
         run: node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info
 
+      # El scan se saltea en PRs de dependabot: SONAR_TOKEN no esta disponible en
+      # esos runs (GitHub no expone secrets a dependabot), asi que el scan
+      # fallaria. El resto del job (build, tests con cobertura) igual corre. En
+      # PRs normales y push a main el token esta y el scan corre normal.
       - name: SonarQube Scan
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         with:
           projectBaseDir: app
