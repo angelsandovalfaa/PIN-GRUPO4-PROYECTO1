@@ -1,10 +1,10 @@
-# Overlay de desarrollo. Corre la app con hot-reload (node --watch) en vez de la
-# imagen pre-buildeada, montando el codigo del host. El resto del stack (redis,
-# prometheus, grafana, cadvisor, node-exporter) se hereda de docker-compose.yml.
+# Overlay de desarrollo. Corre la app con hot-reload (nodemon con polling) en vez
+# de la imagen pre-buildeada, montando el codigo del host. El resto del stack
+# (redis, prometheus, grafana, cadvisor, node-exporter) se hereda de
+# docker-compose.yml.
 #
 # Uso (desde la raiz del repo):
 #   docker compose -f monitoring/docker-compose.yml -f monitoring/docker-compose.dev.yml up
-#   o, mas corto:  just dev
 #
 # Los paths relativos resuelven contra monitoring/ (dir del primer -f), por eso
 # el codigo es ../app.
@@ -12,8 +12,11 @@ services:
   pin-app:
     image: node:24-alpine
     working_dir: /usr/src/app
-    # npm ci una vez al levantar; node --watch (npm run dev) reinicia la app al
-    # cambiar el codigo, sin rebuild de imagen.
+    # npm ci una vez al levantar; npm run dev corre nodemon en modo polling
+    # (--legacy-watch) y reinicia la app al cambiar el codigo, sin rebuild. Se
+    # usa polling porque WSL/Docker no propagan eventos inotify sobre el bind
+    # mount del host, asi que el watcher nativo (node --watch) no detectaria los
+    # cambios.
     command: sh -c "npm ci && npm run dev"
     volumes:
       # Codigo del host montado en el contenedor.
