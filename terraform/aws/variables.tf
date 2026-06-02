@@ -44,13 +44,12 @@ variable "ami_id" {
 }
 
 variable "key_name" {
-  description = "Nombre de key pair para SSH"
+  # Opcional: con SSM Session Manager (ver docs/decisions/0002) no hace falta un
+  # key pair para acceder a la instancia. Vacio = sin key pair. Por eso no lleva
+  # validacion de no-vacio: el deploy pasa key_name="" a proposito.
+  description = "Nombre de key pair para SSH (opcional; vacio = sin key pair, acceso por SSM)"
   type        = string
-
-  validation {
-    condition     = length(var.key_name) > 0
-    error_message = "key_name no puede estar vacio."
-  }
+  default     = ""
 }
 
 variable "app_image" {
