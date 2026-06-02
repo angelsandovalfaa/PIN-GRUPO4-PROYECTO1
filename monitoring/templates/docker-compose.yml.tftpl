@@ -17,7 +17,7 @@ services:
       - "${app_external_port}:3000"
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.6-alpine
     container_name: pin-redis
     restart: unless-stopped
     command: ["redis-server", "--save", "", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
@@ -30,7 +30,7 @@ services:
       retries: 5
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.12.0
     container_name: pin-prometheus
     restart: unless-stopped
     networks:
@@ -41,7 +41,7 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.0.2
     container_name: pin-grafana
     restart: unless-stopped
     networks:
@@ -64,7 +64,7 @@ services:
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources:ro
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
     container_name: pin-cadvisor
     restart: unless-stopped
     networks:
@@ -78,7 +78,7 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v1.11.1
     container_name: pin-node-exporter
     restart: unless-stopped
     networks:

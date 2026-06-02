@@ -30,3 +30,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+
+  # Imagenes del stack de monitoring (prometheus/grafana/cadvisor/node-exporter
+  # /redis) referenciadas en monitoring/docker-compose.yml.
+  - package-ecosystem: "docker-compose"
+    directory: "/monitoring"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
