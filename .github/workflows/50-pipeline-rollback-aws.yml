@@ -23,6 +23,7 @@ jobs:
   prepare:
     name: Resolver image_ref
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event.inputs.confirm_rollback == 'ROLLBACK'
     outputs:
       image_ref: ${{ steps.build.outputs.image_ref }}
