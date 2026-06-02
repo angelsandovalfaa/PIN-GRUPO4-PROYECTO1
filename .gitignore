@@ -4,6 +4,11 @@ terraform/**/*.tfstate
 terraform/**/*.tfstate.*
 terraform/**/crash.log
 
+# Env files: pueden tener secretos. Los .env.example si se versionan.
+.env
+*.env
+!*.env.example
+
 # Node
 app/node_modules/
 

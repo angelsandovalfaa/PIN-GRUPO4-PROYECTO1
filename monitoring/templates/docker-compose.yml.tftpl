@@ -51,9 +51,11 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${grafana_admin_user}
       GF_SECURITY_ADMIN_PASSWORD: ${grafana_admin_password}
-      # Grafana es publico, asi que el login es el control de acceso: sin
-      # acceso anonimo ni alta de usuarios. Ver docs/decisions/0002.
-      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # Dashboard publico de solo-lectura: acceso anonimo con rol Viewer (quien
+      # evalua lo ve sin login), admin protegido por password, sin alta de
+      # usuarios. Ver docs/decisions/0002.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana-data:/var/lib/grafana

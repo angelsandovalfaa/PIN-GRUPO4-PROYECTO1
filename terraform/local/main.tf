@@ -89,9 +89,10 @@ resource "docker_container" "grafana" {
   env = [
     "GF_SECURITY_ADMIN_USER=${var.grafana_admin_user}",
     "GF_SECURITY_ADMIN_PASSWORD=${var.grafana_admin_password}",
-    # Sin acceso anonimo ni alta de usuarios (coherente con el deploy AWS,
-    # donde Grafana es publico). Ver docs/decisions/0002.
-    "GF_AUTH_ANONYMOUS_ENABLED=false",
+    # Dashboard publico de solo-lectura: anonimo con rol Viewer, admin
+    # protegido por password, sin alta de usuarios. Ver docs/decisions/0002.
+    "GF_AUTH_ANONYMOUS_ENABLED=true",
+    "GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer",
     "GF_USERS_ALLOW_SIGN_UP=false"
   ]
 

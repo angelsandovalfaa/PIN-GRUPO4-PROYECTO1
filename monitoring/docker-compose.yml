@@ -8,8 +8,8 @@ services:
     environment:
       PORT: "80"
       REDIS_URL: redis://redis:6379
-      REDIS_TTL: "300"
-      OPEN_METEO_URL: https://api.open-meteo.com
+      REDIS_TTL: "${REDIS_TTL:-300}"
+      OPEN_METEO_URL: "${OPEN_METEO_URL:-https://api.open-meteo.com}"
     depends_on:
       redis:
         condition: service_healthy
@@ -41,11 +41,13 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin123
-      # Sin acceso anonimo ni alta de usuarios (coherente con el deploy AWS,
-      # donde Grafana es publico). Ver docs/decisions/0002.
-      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      # Dashboard publico de solo-lectura: anonimo con rol Viewer (se ve sin
+      # login), admin protegido por password, sin alta de usuarios. Coherente
+      # con el deploy AWS. Ver docs/decisions/0002.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana-data:/var/lib/grafana

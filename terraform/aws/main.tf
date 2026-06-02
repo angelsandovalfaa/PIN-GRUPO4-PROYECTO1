@@ -101,11 +101,12 @@ resource "aws_security_group" "pin" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Grafana: publica pero detras de su login (anonimo y signup deshabilitados,
-  # password por secret). No se restringe por IP porque la del evaluador es
-  # desconocida y dinamica: el control de acceso es autenticacion, no ACL de red.
+  # Grafana: publica en modo solo-lectura (acceso anonimo con rol Viewer), con
+  # el admin protegido por password y sin alta de usuarios. No se restringe por
+  # IP porque la del evaluador es desconocida y dinamica: quien revisa ve el
+  # dashboard sin cuenta. Ver docs/decisions/0002.
   ingress {
-    description = "Grafana (publica, protegida por login)"
+    description = "Grafana (publica, solo-lectura anonima)"
     from_port   = var.grafana_external_port
     to_port     = var.grafana_external_port
     protocol    = "tcp"
