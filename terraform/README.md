@@ -2,7 +2,7 @@
 
 ## Funcion principal
 
-Define infraestructura como codigo separada por entorno para cumplir la consigna de opcion local y opcion nube.
+Define infraestructura como codigo separada por entorno para cumplir la consigna de opcion local y opcion nube. El state para aws se encuentra alamacenado en un bucket de s3.
 
 ## Subcarpetas
 

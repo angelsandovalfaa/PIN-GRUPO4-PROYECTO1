@@ -52,6 +52,16 @@ Pipeline modular de GitHub Actions.
 - Inyecta variables sensibles con secrets (`TF_VAR_grafana_admin_password`, `TF_VAR_key_name`) y pasa `app_image` desde `image_ref`.
 - Resultado: crea/actualiza infraestructura AWS y despliega la version de imagen publicada en GHCR.
 
+6. `41-pipeline-destroy-aws.yml` (terraform init/plan/apply en AWS):
+- Servicio: Runner `ubuntu-latest` + AWS Credentials Action + Terraform.
+- Que hace:
+- `actions/checkout`.
+- `aws-actions/configure-aws-credentials@v4` configura credenciales/region.
+- `hashicorp/setup-terraform@v3` instala Terraform.
+- Ejecuta `terraform destroy -input=false -auto-approve` en `terraform/aws`.
+- Inyecta variables sensibles con secrets (`TF_VAR_grafana_admin_password`, `TF_VAR_key_name`, `TF_VAR_project_name`, `TF_VAR_ghcr_username`, `TF_VAR_ghcr_token`).
+- Resultado: Elimina la infraestructura creada en AWS. Nota: No elimina el bucket s3 que almacena el estado de terraform.
+
 ## Flujo entre workflows
 
 1. `00-pipeline-orchestrator.yml` llama `10-pipeline-build-test.yml`.
