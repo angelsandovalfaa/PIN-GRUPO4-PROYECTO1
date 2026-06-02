@@ -1,21 +1,28 @@
 version: 2
 updates:
-  # Actions del pipeline: dependabot bumpea el SHA pineado cuando sale una
-  # version nueva del tag comentado (# vX), manteniendo el pin al dia.
+  # Actions del pipeline. Agrupadas en un solo PR para no abrir uno por action.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
 
-  # Dependencias de la app (npm).
+  # Dependencias de la app (npm). Agrupadas.
   - package-ecosystem: "npm"
     directory: "/app"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      npm:
+        patterns: ["*"]
 
-  # Providers de Terraform (modulos local y aws).
+  # Providers de Terraform (modulos local y aws). Agrupados.
+  # Se ignora el major de hashicorp/aws: nos quedamos en la serie 5 (el 6 es un
+  # major con breaking changes; el salto se decide a mano, no automatico).
   - package-ecosystem: "terraform"
     directories:
       - "/terraform/aws"
@@ -23,18 +30,32 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      terraform:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "hashicorp/aws"
+        update-types: ["version-update:semver-major"]
 
   # Imagen base del Dockerfile de la app.
+  # Se ignora el major de node: nos quedamos en la linea LTS elegida (24); el
+  # salto a otra linea LTS se decide a mano (que no empuje a una Current como 26).
   - package-ecosystem: "docker"
     directory: "/app"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
 
-  # Imagenes del stack de monitoring (prometheus/grafana/cadvisor/node-exporter
-  # /redis) referenciadas en monitoring/docker-compose.yml.
+  # Imagenes del stack de monitoring referenciadas en monitoring/docker-compose.yml.
+  # Agrupadas.
   - package-ecosystem: "docker-compose"
     directory: "/monitoring"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      monitoring-images:
+        patterns: ["*"]
