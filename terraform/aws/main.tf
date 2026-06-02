@@ -91,61 +91,31 @@ resource "aws_security_group" "pin" {
   description = "PIN security group"
   vpc_id      = aws_vpc.this.id
 
+  # App: publica. Es el producto; el equipo y quien evalue el PIN le pegan
+  # desde cualquier IP. Ver docs/decisions/0002.
   ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
-  }
-
-  ingress {
-    description = "App"
+    description = "App (publica)"
     from_port   = var.app_external_port
     to_port     = var.app_external_port
     protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Grafana: publica pero detras de su login (anonimo y signup deshabilitados,
+  # password por secret). No se restringe por IP porque la del evaluador es
+  # desconocida y dinamica: el control de acceso es autenticacion, no ACL de red.
   ingress {
-    description = "Prometheus"
-    from_port   = var.prometheus_external_port
-    to_port     = var.prometheus_external_port
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
-  }
-
-  ingress {
-    description = "Grafana"
+    description = "Grafana (publica, protegida por login)"
     from_port   = var.grafana_external_port
     to_port     = var.grafana_external_port
     protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "cAdvisor"
-    from_port   = 8081
-    to_port     = 8081
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
-  }
-
-  ingress {
-    description = "Node Exporter"
-    from_port   = 9100
-    to_port     = 9100
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
-  }
-
-  ingress {
-    description = "ICMP (ping)"
-    from_port   = 8
-    to_port     = 0
-    protocol    = "icmp"
-    cidr_blocks = [var.allowed_cidr]
-  }
+  # Prometheus, cAdvisor y node-exporter NO se exponen: son targets internos
+  # (Grafana lee Prometheus y Prometheus scrapea por la red interna de Docker).
+  # SSH tampoco: el acceso administrativo es por SSM Session Manager, sin un
+  # puerto 22 abierto. Ver docs/decisions/0002.
 
   egress {
     from_port   = 0
@@ -159,12 +129,45 @@ resource "aws_security_group" "pin" {
   }
 }
 
+# Acceso administrativo por SSM Session Manager: sin puerto SSH abierto, sin
+# bastion ni llaves de larga vida. El acceso se controla por IAM y queda
+# auditado en CloudTrail. El agente SSM ya viene preinstalado en Amazon Linux
+# 2023 y la instancia tiene salida a internet (subnet publica + egress), asi
+# que alcanza los endpoints de SSM sin VPC endpoints.
+resource "aws_iam_role" "ssm" {
+  name = "${var.project_name}-ssm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+
+  tags = {
+    Name = "${var.project_name}-ssm-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  role       = aws_iam_role.ssm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "ssm" {
+  name = "${var.project_name}-ssm-profile"
+  role = aws_iam_role.ssm.name
+}
+
 resource "aws_instance" "pin" {
   ami                    = data.aws_ami.al2023.id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.pin.id]
   key_name               = var.key_name
+  iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
   user_data_base64 = base64gzip(templatefile("${path.module}/user_data.sh.tftpl", {
     prometheus_config        = local.prometheus_config
