@@ -1,12 +1,12 @@
 # Etapa de dependencias: instala solo las de produccion con el lockfile, en una
 # capa aparte para que el cache se reuse y la imagen final quede limpia.
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
 # Etapa de runtime.
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
