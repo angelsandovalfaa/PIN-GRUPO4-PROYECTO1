@@ -1,0 +1,70 @@
+name: Bootstrap AWS Backend
+
+# Manual, una sola vez al inicio del proyecto: crea el backend remoto de
+# Terraform (bucket S3 del state + tabla DynamoDB de lock) que consume el deploy
+# (40). Es idempotente: si el bucket o la tabla ya existen, los importa en vez de
+# fallar con "already exists". Los nombres salen de los secrets TF_STATE_BUCKET /
+# TF_LOCK_TABLE, los mismos que usa el deploy, asi no hay drift de nombres.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_bootstrap:
+        description: "Escribe BOOTSTRAP para crear o importar el backend"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    name: Terraform Bootstrap Backend
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_bootstrap == 'BOOTSTRAP'
+    # Mismo group estatico que el deploy/destroy: no correr a la vez contra el
+    # state remoto (aunque el bootstrap usa state local, comparte recursos AWS).
+    concurrency:
+      group: terraform-aws
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: terraform/bootstrap
+    env:
+      TF_VAR_state_bucket_name: ${{ secrets.TF_STATE_BUCKET }}
+      TF_VAR_lock_table_name: ${{ secrets.TF_LOCK_TABLE }}
+      TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b # v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+
+      - name: Validate backend secrets
+        run: |
+          test -n "${TF_VAR_state_bucket_name}" || (echo "Falta secret TF_STATE_BUCKET" && exit 1)
+          test -n "${TF_VAR_lock_table_name}" || (echo "Falta secret TF_LOCK_TABLE" && exit 1)
+          test -n "${TF_VAR_aws_region}" || (echo "Falta secret AWS_REGION" && exit 1)
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Import existing backend (idempotente)
+        env:
+          BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          TABLE: ${{ secrets.TF_LOCK_TABLE }}
+        run: |
+          terraform import -input=false aws_s3_bucket.tfstate "$BUCKET" \
+            || echo "Bucket no importado (no existe todavia); el apply lo creara."
+          terraform import -input=false aws_dynamodb_table.tflock "$TABLE" \
+            || echo "Tabla no importada (no existe todavia); el apply la creara."
+
+      - name: Terraform apply
+        run: terraform apply -input=false -auto-approve
