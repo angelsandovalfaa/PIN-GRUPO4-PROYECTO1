@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # Actions del pipeline: dependabot bumpea el SHA pineado cuando sale una
+  # version nueva del tag comentado (# vX), manteniendo el pin al dia.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Dependencias de la app (npm).
+  - package-ecosystem: "npm"
+    directory: "/app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Providers de Terraform (modulos local y aws).
+  - package-ecosystem: "terraform"
+    directories:
+      - "/terraform/aws"
+      - "/terraform/local"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Imagen base del Dockerfile de la app.
+  - package-ecosystem: "docker"
+    directory: "/app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
