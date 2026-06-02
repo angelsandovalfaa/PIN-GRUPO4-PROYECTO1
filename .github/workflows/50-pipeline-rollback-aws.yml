@@ -1,0 +1,57 @@
+name: Rollback AWS
+
+# Manual: redeploya un tag o short-SHA previo de ghcr.io/<owner>/pin-app SIN
+# rebuild. Reusa el deploy 40 (mismo terraform apply que el pipeline normal),
+# cambiando solo la imagen. Pensado para volver rapido a una version estable
+# tras un deploy malo, sin esperar un nuevo build.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Tag o short-SHA (7 chars) a redeployar, ej: a1b2c3d. Lo ves en Packages de ghcr.io/<owner>/pin-app o en el run de 30-docker que lo publico."
+        required: true
+        type: string
+      confirm_rollback:
+        description: "Escribe ROLLBACK para confirmar el redeploy"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Resolver image_ref
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_rollback == 'ROLLBACK'
+    outputs:
+      image_ref: ${{ steps.build.outputs.image_ref }}
+    steps:
+      - name: Validar y construir image_ref
+        id: build
+        # El input se lee por env var, nunca interpolado con ${{ }} dentro del
+        # run: interpolar un input directo en el shell es un vector de inyeccion.
+        # Ademas se valida el formato de tag de Docker antes de usarlo, porque el
+        # ref termina inyectado en el `terraform apply -var=...` del reusable 40.
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if ! echo "$IMAGE_TAG" | grep -qE '^[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}$'; then
+            echo "image_tag invalido: solo se permiten [a-zA-Z0-9._-], sin empezar con . o -, hasta 128 chars."
+            exit 1
+          fi
+          IMAGE_REF="ghcr.io/${OWNER}/pin-app:${IMAGE_TAG}"
+          echo "Rollback target: ${IMAGE_REF}"
+          echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+
+  rollback_deploy:
+    name: Deploy AWS (imagen previa)
+    needs: prepare
+    # 40 no declara bloque secrets en su workflow_call, asi que el caller debe
+    # heredarlos. El terraform apply corre con el mismo group de concurrency
+    # estatico (terraform-aws) que el deploy normal, asi no compiten por el lock.
+    uses: ./.github/workflows/40-pipeline-deploy-aws.yml
+    with:
+      image_ref: ${{ needs.prepare.outputs.image_ref }}
+    secrets: inherit

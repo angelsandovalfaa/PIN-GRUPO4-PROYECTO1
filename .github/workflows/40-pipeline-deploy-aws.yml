@@ -10,8 +10,11 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Grupo estatico (no por github.workflow) para que el deploy normal y el
+    # rollback (50), que reusan este mismo job, compartan cola y no corran a la
+    # vez compitiendo por el lock de DynamoDB del state.
     concurrency:
-      group: terraform-aws-${{ github.workflow }}-${{ github.ref }}
+      group: terraform-aws
       cancel-in-progress: false
     defaults:
       run:
