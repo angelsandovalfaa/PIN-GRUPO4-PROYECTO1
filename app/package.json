@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=50",
     "lint": "eslint .",
     "build": "echo 'Build OK'"
   },
