@@ -12,6 +12,7 @@ Construir un flujo completo que:
 4. Construya y publique imagen Docker.
 5. Despliegue en AWS con Terraform.
 6. Permita también pruebas locales con Terraform + Docker.
+7. Exponga observabilidad lista para usar con Prometheus, Grafana, cAdvisor y node-exporter.
 
 ## Stack
 
@@ -21,7 +22,7 @@ Construir un flujo completo que:
 - Local: Docker provider de Terraform
 - App: Node.js + Express
 - Seguridad: ESLint + Snyk + SBOM CycloneDX
-- Observabilidad: Prometheus + Grafana + cAdvisor + node-exporter
+- Observabilidad: Prometheus + Grafana + cAdvisor + node-exporter + dashboard Grafana preconfigurado
 
 ## Estructura del proyecto
 
@@ -44,7 +45,12 @@ pin/
 │   │   ├── docker-compose.yml.tftpl
 │   │   └── prometheus.yml.tftpl
 │   ├── docker-compose.yml
+│   ├── dashboard.json
+│   ├── alerts.yml
 │   ├── prometheus.yml
+│   ├── provisioning/
+│   │   ├── dashboards/
+│   │   └── datasources/
 │   └── README.md
 ├── security/
 │   ├── sbom/
@@ -83,19 +89,27 @@ pin/
 
 ### 1) App (`app/`)
 
+- Es una app Node.js + Express orientada a demo de observabilidad y caché.
 - Expone endpoints:
-  - `/` estado de servicio
-  - `/health` healthcheck
-  - `/metrics` métricas Prometheus
-- Incluye tests unitarios y lint.
-- Tiene `Dockerfile` reproducible para publicar imagen.
+  - `/`: responde `{ ok: true, delay }` y simula una pequeña latencia.
+  - `/health`: healthcheck simple y valida si Redis está disponible.
+  - `/weather`: consulta Open-Meteo, usa caché en Redis y registra métricas del upstream.
+  - `/metrics`: expone métricas Prometheus de requests, caché, dependencias y tiempos.
+  - `/project`: sirve una página HTML con la arquitectura y enlaces del proyecto.
+  - `/project/services`: devuelve URLs de App, Grafana, Prometheus, cAdvisor y node-exporter.
+  - `/static`: sirve assets públicos de la carpeta `app/public/`.
+- Soporta ciudades conocidas o coordenadas `lat/lon` directas para `/weather`.
+- Intenta leer `terraform output -json` para autocompletar URLs del entorno AWS.
+- Incluye tests unitarios, lint y `Dockerfile` reproducible para publicar imagen.
 
 ### 2) Monitoring (`monitoring/`)
 
-Plantillas reutilizadas por ambos entornos (local y AWS):
+Plantillas reutilizadas por ambos entornos (local y AWS), con dashboard listo para importarse en Grafana:
 
 - `templates/docker-compose.yml.tftpl`: define servicios `pin-app`, `prometheus`, `grafana`, `cadvisor`, `node-exporter`.
 - `templates/prometheus.yml.tftpl`: targets de scraping de app y componentes de observabilidad.
+- `dashboard.json`: dashboard principal de Grafana con paneles de app, contenedores e instancia.
+- `provisioning/`: datasource y dashboards auto-provisionados para evitar configuración manual.
 
 ### 3) Security (`security/`)
 
@@ -202,6 +216,13 @@ Salidas esperadas:
 - App: `http://localhost:8080`
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000`
+- cAdvisor: `http://localhost:8081`
+- node-exporter: `http://localhost:9100`
+
+Dashboard sugerido en Grafana:
+
+- `monitoring/dashboard.json`
+- Métricas visibles: disponibilidad, tasa de requests, latencia, CPU y memoria de la instancia, CPU y memoria por contenedor, uptime de contenedores.
 
 Destruir entorno local:
 
@@ -227,6 +248,8 @@ Outputs esperados:
 - `app_url`
 - `prometheus_url`
 - `grafana_url`
+- `cadvisor_url`
+- `node_exporter_url`
 
 ## Secrets requeridos en GitHub
 
@@ -252,11 +275,12 @@ Guardar en `docs/`:
 - `terraform-apply.png`
 - `app-ok.png`
 - `grafana-dashboard.png`
+- `grafana-observability.png`
 - `security-sbom.png`
 
 ## Troubleshooting rápido
 
 - Si falla deploy AWS: revisar credenciales IAM y región.
 - Si falla Snyk: validar `SNYK_TOKEN` en secrets.
-- Si Grafana no abre: revisar puertos/security group.
+- Si Grafana no abre: revisar puertos/security group y que el dashboard/provisioning se hayan montado correctamente.
 - Si Terraform local falla: verificar Docker daemon activo.
