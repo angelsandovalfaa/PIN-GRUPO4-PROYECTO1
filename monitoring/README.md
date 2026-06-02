@@ -19,23 +19,17 @@ entorno para **desarrollar y probar** la app en local con todo el stack.
 
 ## Levantar en local
 
-Con [`just`](../justfile) desde la raiz del repo:
+Desde la raiz del repo.
+
+Entorno de dev (app con hot-reload + stack completo):
 
 ```bash
-just dev        # entorno de dev: app con hot-reload + stack completo
-just dev-down   # bajar
-
-just up         # stack prod-like: buildea pin-app:local y levanta
-just down
+docker compose -f monitoring/docker-compose.yml -f monitoring/docker-compose.dev.yml up
 ```
 
-Sin `just`, los comandos equivalentes:
+Stack prod-like (imagen buildeada, sin hot-reload):
 
 ```bash
-# dev (hot-reload)
-docker compose -f monitoring/docker-compose.yml -f monitoring/docker-compose.dev.yml up
-
-# prod-like (imagen buildeada)
 docker build -t pin-app:local ./app
 docker compose -f monitoring/docker-compose.yml up -d
 ```
