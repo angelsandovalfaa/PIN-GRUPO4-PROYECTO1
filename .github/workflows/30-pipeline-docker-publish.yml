@@ -27,7 +27,12 @@ jobs:
           IMAGE_REF="ghcr.io/${GITHUB_REPOSITORY_OWNER}/pin-app:${TAG}"
           echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
 
+      # Solo se pushea la imagen en push a main (la que despues deploya el 40).
+      # En PRs se buildea pero no se pushea: valida que el Dockerfile compile sin
+      # publicar. Ademas, los PRs de dependabot tienen GITHUB_TOKEN read-only y un
+      # push fallaria con 403; asi se evita.
       - name: Login to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           registry: ghcr.io
@@ -39,5 +44,5 @@ jobs:
         with:
           context: ./app
           file: ./app/Dockerfile
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.image_ref }}
