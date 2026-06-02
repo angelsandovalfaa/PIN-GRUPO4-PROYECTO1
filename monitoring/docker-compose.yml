@@ -43,6 +43,10 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin123
+      # Sin acceso anonimo ni alta de usuarios (coherente con el deploy AWS,
+      # donde Grafana es publico). Ver docs/decisions/0002.
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana-data:/var/lib/grafana
       - ./dashboard.json:/var/lib/grafana/dashboards/dashboard.json:ro

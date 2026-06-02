@@ -27,12 +27,6 @@ variable "key_name" {
   type        = string
 }
 
-variable "allowed_cidr" {
-  description = "CIDR con acceso a puertos expuestos"
-  type        = string
-  default     = "0.0.0.0/0"
-}
-
 variable "app_image" {
   description = "Imagen Docker de la app"
   type        = string
