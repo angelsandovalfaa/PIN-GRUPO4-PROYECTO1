@@ -115,7 +115,7 @@ Plantillas reutilizadas por ambos entornos (local y AWS), con dashboard listo pa
 
 - `templates/docker-compose.yml.tftpl`: define servicios `pin-app`, `prometheus`, `grafana`, `cadvisor`, `node-exporter`.
 - `templates/prometheus.yml.tftpl`: targets de scraping de app y componentes de observabilidad.
-- `dashboard.json`: dashboard principal de Grafana con paneles de app, contenedores e instancia.
+- `dashboard.json`: dashboard principal de Grafana con paneles de app (estado, requests, error rate, latencia avg/p95, cache hit ratio, upstream Open-Meteo) y de host (node-exporter: CPU, memoria, load). cAdvisor se scrapea pero no tiene panel propio.
 - `provisioning/`: datasource y dashboards auto-provisionados para evitar configuración manual.
 
 ### 3) Security (`security/`)
@@ -199,7 +199,7 @@ Salidas esperadas:
 Dashboard sugerido en Grafana:
 
 - `monitoring/dashboard.json`
-- Métricas visibles: disponibilidad, tasa de requests, latencia, CPU y memoria de la instancia, CPU y memoria por contenedor, uptime de contenedores.
+- Métricas visibles: disponibilidad, tasa de requests, error rate, latencia (avg y p95), cache hit ratio, upstream Open-Meteo, y CPU/memoria/load de la instancia (host, node-exporter).
 
 Destruir entorno local:
 

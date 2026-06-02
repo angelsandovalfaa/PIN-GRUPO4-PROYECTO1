@@ -117,6 +117,18 @@ function createApp({ cache = defaultCache } = {}) {
 
   app.use('/static', express.static(publicDir));
 
+  // Mide la duracion de cada request HTTP. Antes solo se medía en "/", asi que
+  // los paneles de latencia (Average/P95) quedaban vacios porque el trafico real
+  // es a /weather. El histograma se observa al cerrar la respuesta.
+  app.use((req, res, next) => {
+    if (req.path === '/metrics') return next();
+    const end = httpRequestDuration.startTimer();
+    res.on('finish', () => {
+      end({ method: req.method, route: req.route?.path || req.path, code: res.statusCode });
+    });
+    next();
+  });
+
   app.get('/weather', async (req, res) => {
     const coords = resolveCoords(req.query);
     if (!coords) {
@@ -185,11 +197,9 @@ function createApp({ cache = defaultCache } = {}) {
   });
 
   app.get('/', async (req, res) => {
-    const end = httpRequestDuration.startTimer();
     const delay = req.query.delay ? parseInt(req.query.delay, 10) : Math.random() * 300;
     await setTimeout(delay);
     res.json({ ok: true, delay: Math.round(delay) });
-    end({ method: req.method, route: '/', code: 200 });
     httpRequestsTotal.inc({ method: req.method, route: '/', status_code: '200' });
   });
 
