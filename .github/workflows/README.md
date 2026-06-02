@@ -2,83 +2,82 @@
 
 ## Funcion principal
 
-Pipeline modular de GitHub Actions.
+Pipeline modular de GitHub Actions. Un orquestador encadena workflows reusables
+para build, test, seguridad, publicacion de imagen y deploy; ademas hay
+workflows manuales para operar la infra (bootstrap, rollback, destroy) y
+workflows standalone de validacion de Terraform y analisis de SonarQube.
+
+Convencion: las actions de terceros estan **pineadas a SHA** (no a tags
+flotantes), Node es **24 (LTS)**, y los jobs tienen `timeout-minutes`.
 
 ## Archivos
 
-- `00-pipeline-orchestrator.yml`: workflow orquestador; define triggers (`push` y `pull_request` a `main`) y encadena jobs reusables.
-- `10-pipeline-build-test.yml`: workflow reusable con build y tests de la app.
-- `20-pipeline-security-sbom.yml`: workflow reusable con ESLint, Snyk y generacion de SBOM.
-- `30-pipeline-docker-publish.yml`: workflow reusable de build/push de imagen a GHCR y salida `image_ref`.
-- `40-pipeline-deploy-aws.yml`: workflow reusable para `terraform init/plan/apply` en `terraform/aws`.
+### Pipeline orquestado (push / pull_request a `main`)
 
-## Que corre en cada pipeline
+- `00-pipeline-orchestrator.yml`: orquestador. Dispara en `push`/`pull_request`
+  a `main`, hereda secrets a los reusables (`secrets: inherit`) y define el orden.
+  Permisos minimos: `contents: read`, `packages: write`.
+- `10-pipeline-build-test.yml` (reusable): job `build` (`npm ci` + `npm run build`)
+  y job `test` (`npm run test:coverage`, tests con cobertura) en `app/`, Node 24
+  con cache de npm.
+- `20-pipeline-security-sbom.yml` (reusable): job `security` (ESLint + Snyk sobre
+  `app/package.json`, umbral high) y job `sbom` (build local de la imagen, **Trivy**
+  para vulnerabilidades de la imagen en modo reporte, y **SBOM CycloneDX de la
+  imagen** publicado como artifact).
+- `30-pipeline-docker-publish.yml` (reusable): construye `app/Dockerfile`, taggea
+  `ghcr.io/<owner>/pin-app:<short-sha>` y la publica en GHCR para el deploy.
+  Expone `image_ref` como output.
+- `40-pipeline-deploy-aws.yml` (reusable): `terraform init/plan/apply` en
+  `terraform/aws` con backend remoto S3 + lock DynamoDB. Recibe `image_ref` y lo
+  pasa como `app_image`. Concurrency en group estatico `terraform-aws`.
 
-1. `00-pipeline-orchestrator.yml`
-- Servicio: GitHub Actions (workflow principal).
-- Que hace: dispara en `push`/`pull_request` a `main`, hereda secrets a workflows reusables y define el orden de ejecucion.
-- Permisos: `contents:read` para checkout y `packages:write` para publicar imagen en GHCR.
+### Filtro de deploy
 
-2. `10-pipeline-build-test.yml`
-- Servicio: Runner `ubuntu-latest` + `actions/setup-node@v4`.
-- Que hace:
-- Job `build`: `actions/checkout`, instala Node 20, ejecuta `npm ci` y `npm run build` en `app/`.
-- Job `test`: vuelve a hacer checkout/setup, ejecuta `npm ci` y `npm test` en `app/`.
-- Resultado: valida que la app compile y que los tests unitarios pasen.
+El orquestador tiene un job `changes` que, en push a `main`, usa `git diff` para
+detectar si el push toco `terraform/aws/`, `monitoring/` o `app/` (lo unico que
+afecta lo deployado). El `ci_deploy_aws` solo corre si hubo ese tipo de cambio:
+un merge de solo docs, CI o `terraform/local` ya **no** dispara deploy (la cadena
+build/test/sbom/docker igual corre siempre).
 
-3. `20-pipeline-security-sbom.yml`
-- Servicio: Runner `ubuntu-latest` + acciones de seguridad.
-- Que hace:
-- Job `security`: checkout, Node 20, `npm ci`, `npm run lint`, valida existencia de `SNYK_TOKEN`, y corre `snyk/actions/node@master` con `--severity-threshold=high --file=app/package.json`.
-- Job `sbom`: genera SBOM CycloneDX con `anchore/sbom-action@v0` sobre `./app` y lo publica como artifact `sbom-cyclonedx`.
-- Resultado: bloquea el pipeline si hay vulnerabilidades altas y deja evidencia SBOM para la entrega.
+### Workflows manuales de infra (`workflow_dispatch`)
 
-4. `30-pipeline-docker-publish.yml`
-- Servicio: Runner `ubuntu-latest` + Docker Buildx + GHCR.
-- Que hace:
-- `actions/checkout`.
-- Genera tag corto con SHA y construye `image_ref` (`ghcr.io/<owner>/pin-app:<sha7>`).
-- `docker/login-action@v3` autentica en `ghcr.io` con `GITHUB_TOKEN`.
-- `docker/build-push-action@v6` construye `app/Dockerfile` y hace push de la imagen.
-- Resultado: publica imagen versionada y expone `image_ref` para el deploy.
+- `42-pipeline-bootstrap-aws.yml`: crea el backend remoto (bucket S3 + tabla
+  DynamoDB) corriendo el modulo `terraform/bootstrap`. Confirmacion `BOOTSTRAP`.
+  Idempotente: importa el bucket/tabla si ya existen. Se corre una sola vez.
+- `50-pipeline-rollback-aws.yml`: redeploya un tag/short-SHA previo de GHCR sin
+  rebuild, reusando el deploy `40`. Confirmacion `ROLLBACK`. Valida el tag antes
+  de usarlo.
+- `41-pipeline-destroy-aws.yml`: `terraform destroy` de `terraform/aws`.
+  Confirmacion `DESTROY` y gate de aprobacion via environment `production-destroy`
+  (requiere configurar required reviewers en Settings para que frene). No borra el
+  bucket del state.
 
-5. `40-pipeline-deploy-aws.yml`
-- Servicio: Runner `ubuntu-latest` + AWS Credentials Action + Terraform.
-- Que hace:
-- `actions/checkout`.
-- `aws-actions/configure-aws-credentials@v4` configura credenciales/region.
-- `hashicorp/setup-terraform@v3` instala Terraform.
-- Ejecuta `terraform init`, `terraform plan -input=false` y `terraform apply -input=false -auto-approve` en `terraform/aws`.
-- Inyecta variables sensibles con secrets (`TF_VAR_grafana_admin_password`, `TF_VAR_key_name`) y pasa `app_image` desde `image_ref`.
-- Resultado: crea/actualiza infraestructura AWS y despliega la version de imagen publicada en GHCR.
+### Workflows standalone (push / pull_request a `main`)
 
-6. `41-pipeline-destroy-aws.yml` (terraform init/plan/apply en AWS):
-- Servicio: Runner `ubuntu-latest` + AWS Credentials Action + Terraform.
-- Que hace:
-- `actions/checkout`.
-- `aws-actions/configure-aws-credentials@v4` configura credenciales/region.
-- `hashicorp/setup-terraform@v3` instala Terraform.
-- Ejecuta `terraform destroy -input=false -auto-approve` en `terraform/aws`.
-- Inyecta variables sensibles con secrets (`TF_VAR_grafana_admin_password`, `TF_VAR_key_name`, `TF_VAR_project_name`, `TF_VAR_ghcr_username`, `TF_VAR_ghcr_token`).
-- Resultado: Elimina la infraestructura creada en AWS. Nota: No elimina el bucket s3 que almacena el estado de terraform.
+- `terraform-validate.yml`: `terraform fmt -check`, `validate` por modulo y
+  **Trivy config** (misconfiguraciones de IaC, reemplaza al deprecado tfsec) en
+  modo reporte. Da feedback temprano sobre los `.tf` antes del deploy.
+- `sonarqube.yml`: analisis de SonarQube Cloud CI-based **con cobertura** (genera
+  lcov con `node --test` y lo sube con `sonarqube-scan-action`). Es un check de
+  calidad, no gatea el resto del pipeline.
 
-## Flujo entre workflows
+## Flujo del pipeline orquestado
 
-1. `00-pipeline-orchestrator.yml` llama `10-pipeline-build-test.yml`.
-2. Si pasa, llama `20-pipeline-security-sbom.yml`.
-3. Si pasa, llama `30-pipeline-docker-publish.yml`.
-4. En rama `main`, usa `image_ref` y llama `40-pipeline-deploy-aws.yml`.
+1. `00` llama `10` (build + test).
+2. Si pasa, `20` (security + sbom).
+3. Si pasa, `30` (docker publish).
+4. En push a `main` y si `changes` detecto cambios de infra/app, `40` (deploy).
+
+`terraform-validate` y `sonarqube` corren en paralelo, por su cuenta.
 
 ## Secrets requeridos
 
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
 - `AWS_KEY_NAME`
-- `ADMIN_PASSWORD`
+- `ADMIN_PASSWORD` (admin de Grafana)
 - `EC2_PROJECT_NAME`
-- `TF_STATE_BUCKET`
-- `TF_STATE_KEY`
-- `TF_LOCK_TABLE`
+- `TF_STATE_BUCKET`, `TF_STATE_KEY`, `TF_LOCK_TABLE` (backend remoto)
+- `GHCR_USERNAME`, `GHCR_TOKEN` (opcionales, si la imagen en GHCR es privada)
 - `SNYK_TOKEN`
-- `GITHUB_TOKEN` (automatico para GHCR)
+- `SONAR_TOKEN`
+- `GITHUB_TOKEN` (automatico, para GHCR)

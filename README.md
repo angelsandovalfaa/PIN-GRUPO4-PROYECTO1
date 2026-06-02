@@ -20,8 +20,8 @@ Construir un flujo completo que:
 - IaC: Terraform
 - Cloud: AWS (entorno productivo/entrega)
 - Local: Docker provider de Terraform
-- App: Node.js + Express
-- Seguridad: ESLint + Snyk + SBOM CycloneDX
+- App: Node.js + Express (Node 24 LTS)
+- Seguridad: ESLint + Snyk + Trivy (imagen e IaC) + SonarQube Cloud + SBOM CycloneDX
 - Observabilidad: Prometheus + Grafana + cAdvisor + node-exporter + dashboard Grafana preconfigurado
 
 ## Estructura del proyecto
@@ -73,9 +73,16 @@ pin/
 │   │   ├── outputs.tf
 │   │   ├── terraform.tfvars.example
 │   │   └── README.md
+│   ├── bootstrap/
+│   │   ├── main.tf
+│   │   ├── providers.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── README.md
 │   └── README.md
 ├── docs/
 │   ├── architecture/
+│   ├── decisions/
 │   ├── screenshots/
 │   ├── video/
 │   ├── entregables.md
@@ -135,52 +142,22 @@ Plantillas reutilizadas por ambos entornos (local y AWS), con dashboard listo pa
 
 ### 6) Workflows GitHub (`.github/workflows/`)
 
-Pipeline modular por responsabilidad:
+Pipeline modular: un orquestador (`00`) encadena reusables de build/test (`10`),
+seguridad y SBOM (`20`: ESLint, Snyk, Trivy de imagen, SBOM CycloneDX), publicacion
+de imagen a GHCR (`30`) y deploy a AWS (`40`). El deploy corre en push a `main` y
+solo si un job `changes` detecta cambios en `terraform/aws/`, `monitoring/` o
+`app/` (los merges de solo docs/CI no redeployan).
 
-- `00-pipeline-orchestrator.yml` (orquestador):
-  - Servicio: GitHub Actions (workflow principal).
-  - Que hace: dispara en `push`/`pull_request` a `main`, hereda secrets a workflows reusables y define el orden de ejecución.
-  - Permisos: `contents:read` para checkout y `packages:write` para publicar imagen en GHCR.
-- `10-pipeline-build-test.yml` (build + tests):
-  - Servicio: Runner `ubuntu-latest` + `actions/setup-node@v4`.
-  - Que hace:
-    - Job `build`: `actions/checkout`, instala Node 20, ejecuta `npm ci` y `npm run build` en `app/`.
-    - Job `test`: vuelve a hacer checkout/setup, ejecuta `npm ci` y `npm test` en `app/`.
-  - Resultado: valida que la app compile y que los tests unitarios pasen.
-- `20-pipeline-security-sbom.yml` (ESLint + Snyk + SBOM):
-  - Servicio: Runner `ubuntu-latest` + acciones de seguridad.
-  - Que hace:
-    - Job `security`: checkout, Node 20, `npm ci`, `npm run lint`, valida existencia de `SNYK_TOKEN`, y corre `snyk/actions/node@master` con `--severity-threshold=high --file=app/package.json`.
-    - Job `sbom`: genera SBOM CycloneDX con `anchore/sbom-action@v0` sobre `./app` y lo publica como artifact `sbom-cyclonedx`.
-  - Resultado: bloquea el pipeline si hay vulnerabilidades altas y deja evidencia SBOM para la entrega.
-- `30-pipeline-docker-publish.yml` (build/push a GHCR, output `image_ref`):
-  - Servicio: Runner `ubuntu-latest` + Docker Buildx + GHCR.
-  - Que hace:
-    - `actions/checkout`.
-    - Genera tag corto con SHA y construye `image_ref` (`ghcr.io/<owner>/pin-app:<sha7>`).
-    - `docker/login-action@v3` autentica en `ghcr.io` con `GITHUB_TOKEN`.
-    - `docker/build-push-action@v6` construye `app/Dockerfile` y hace push de la imagen.
-  - Resultado: publica imagen versionada y expone `image_ref` para el deploy.
-- `40-pipeline-deploy-aws.yml` (terraform init/plan/apply en AWS):
-  - Servicio: Runner `ubuntu-latest` + AWS Credentials Action + Terraform.
-  - Que hace:
-    - `actions/checkout`.
-    - `aws-actions/configure-aws-credentials@v4` configura credenciales/region.
-    - `hashicorp/setup-terraform@v3` instala Terraform.
-    - Ejecuta `terraform init`, `terraform plan -input=false` y `terraform apply -input=false -auto-approve` en `terraform/aws`.
-    - Inyecta variables sensibles con secrets (`TF_VAR_grafana_admin_password`, `TF_VAR_key_name`) y pasa `app_image` desde `image_ref`.
-  - Resultado: crea/actualiza infraestructura AWS y despliega la versión de imagen publicada en GHCR.
-- `41-pipeline-destroy-aws.yml` (terraform init/plan/apply en AWS):
-  - Servicio: Runner `ubuntu-latest` + AWS Credentials Action + Terraform.
-  - Que hace:
-    - `actions/checkout`.
-    - `aws-actions/configure-aws-credentials@v4` configura credenciales/region.
-    - `hashicorp/setup-terraform@v3` instala Terraform.
-    - Ejecuta `terraform destroy -input=false -auto-approve` en `terraform/aws`.
-    - Inyecta variables sensibles con secrets (`TF_VAR_grafana_admin_password`, `TF_VAR_key_name`, `TF_VAR_project_name`, `TF_VAR_ghcr_username`, `TF_VAR_ghcr_token`).
-  - Resultado: Elimina la infraestructura creada en AWS. Nota: No elimina el bucket s3 que almacena el estado de terraform.
+Hay ademas workflows manuales para operar la infra (`42` bootstrap del backend,
+`50` rollback de imagen previa, `41` destroy con gate de aprobacion) y workflows
+standalone de validacion de Terraform (`terraform-validate.yml`) y analisis de
+SonarQube con cobertura (`sonarqube.yml`).
 
-Flujo: `build/test` -> `security/sbom` -> `docker` -> `deploy` (solo en `main`).
+Detalle completo de cada workflow, el flujo y los secrets en
+[`.github/workflows/README.md`](.github/workflows/README.md).
+
+Flujo orquestado: `build/test` -> `security/sbom` -> `docker` -> `deploy` (en
+`main`, si hubo cambios de infra/app).
 
 ## Ejecución local de app
 
@@ -197,7 +174,7 @@ npm start
 
 ```bash
 docker build -t pin-app:local ./app
-docker run -p 8080:80 pin-app:local
+docker run -p 8080:3000 pin-app:local
 ```
 
 ## Terraform Local (pruebas)
@@ -265,6 +242,7 @@ Outputs esperados:
 - `GHCR_USERNAME` (opcional, requerido si la imagen en GHCR es privada)
 - `GHCR_TOKEN` (opcional, requerido si la imagen en GHCR es privada)
 - `SNYK_TOKEN`
+- `SONAR_TOKEN` (analisis de SonarQube Cloud CI-based)
 - `GITHUB_TOKEN` (automatico, para login/push a GHCR)
 
 ## Evidencias para la entrega
