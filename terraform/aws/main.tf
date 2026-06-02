@@ -25,7 +25,7 @@ locals {
 
   dashboard_json = replace(file("${path.module}/../../monitoring/dashboard.json"), "$", "$$")
 
-  provisioning_dashboards_yml = replace(file("${path.module}/../../monitoring/provisioning/dashboards/dashboards.yml"), "$", "$$")
+  provisioning_dashboards_yml  = replace(file("${path.module}/../../monitoring/provisioning/dashboards/dashboards.yml"), "$", "$$")
   provisioning_datasources_yml = replace(file("${path.module}/../../monitoring/provisioning/datasources/prometheus.yml"), "$", "$$")
 
   docker_compose = templatefile("${path.module}/../../monitoring/templates/docker-compose.yml.tftpl", {
@@ -35,6 +35,7 @@ locals {
     grafana_external_port    = var.grafana_external_port
     grafana_admin_user       = var.grafana_admin_user
     grafana_admin_password   = var.grafana_admin_password
+    cache_ttl                = var.cache_ttl
   })
 }
 

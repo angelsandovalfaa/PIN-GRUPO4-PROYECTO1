@@ -45,3 +45,9 @@ variable "node_exporter_external_port" {
   type        = number
   default     = 9100
 }
+
+variable "cache_ttl" {
+  description = "TTL en segundos de la cache Redis del proxy de clima"
+  type        = number
+  default     = 300
+}

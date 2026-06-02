@@ -5,6 +5,25 @@ services:
     restart: unless-stopped
     ports:
       - "8080:80"
+    environment:
+      PORT: "80"
+      REDIS_URL: redis://redis:6379
+      REDIS_TTL: "300"
+      OPEN_METEO_URL: https://api.open-meteo.com
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: pin-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   prometheus:
     image: prom/prometheus:latest
