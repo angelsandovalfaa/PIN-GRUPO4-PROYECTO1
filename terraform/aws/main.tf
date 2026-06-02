@@ -163,7 +163,9 @@ resource "aws_iam_instance_profile" "ssm" {
 }
 
 resource "aws_instance" "pin" {
-  ami                    = data.aws_ami.al2023.id
+  # Si var.ami_id esta seteada, pina esa AMI (deploy reproducible); si no, toma
+  # la ultima AL2023 (parcheada). Ver variables.tf.
+  ami                    = coalesce(var.ami_id, data.aws_ami.al2023.id)
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.pin.id]
