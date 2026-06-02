@@ -2,6 +2,9 @@ apiVersion: 1
 
 datasources:
   - name: Prometheus
+    # uid fijo: el dashboard referencia la datasource por este uid, asi el
+    # provisioning es estable y no depende del uid autogenerado.
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090
