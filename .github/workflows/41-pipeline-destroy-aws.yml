@@ -12,11 +12,18 @@ jobs:
   destroy:
     name: Terraform Destroy AWS
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Group estatico compartido con deploy/rollback/bootstrap: serializa todas
+    # las operaciones sobre el state remoto, no compiten por el lock.
     concurrency:
-      group: terraform-aws-${{ github.workflow }}-${{ github.ref }}
+      group: terraform-aws
       cancel-in-progress: false
-    #environment:
-    #  name: production-destroy
+    # Gate de aprobacion humana. Para que frene de verdad hay que crear el
+    # environment 'production-destroy' en Settings > Environments con required
+    # reviewers; sin esa config el environment existe pero no bloquea (no-op).
+    # El destroy es puerta de una via, por eso merece el gate ademas del confirm.
+    environment:
+      name: production-destroy
     if: github.event.inputs.confirm_destroy == 'DESTROY'
 
     defaults:
