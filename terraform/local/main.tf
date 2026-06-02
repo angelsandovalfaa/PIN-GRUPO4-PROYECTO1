@@ -11,7 +11,7 @@ resource "docker_image" "app" {
 }
 
 resource "docker_image" "redis" {
-  name = "redis:7-alpine"
+  name = "redis:7.4.6-alpine"
 }
 
 resource "docker_container" "redis" {
@@ -52,7 +52,7 @@ resource "docker_container" "app" {
 
 resource "docker_container" "prometheus" {
   name  = "pin-prometheus"
-  image = "prom/prometheus:latest"
+  image = "prom/prometheus:v3.12.0"
 
   restart = "unless-stopped"
 
@@ -73,7 +73,7 @@ resource "docker_container" "prometheus" {
 
 resource "docker_container" "grafana" {
   name  = "pin-grafana"
-  image = "grafana/grafana:latest"
+  image = "grafana/grafana:13.0.2"
 
   restart = "unless-stopped"
 
@@ -104,7 +104,7 @@ resource "docker_container" "grafana" {
 
 resource "docker_container" "cadvisor" {
   name  = "pin-cadvisor"
-  image = "gcr.io/cadvisor/cadvisor:latest"
+  image = "gcr.io/cadvisor/cadvisor:v0.55.1"
 
   restart = "unless-stopped"
 
@@ -144,7 +144,7 @@ resource "docker_container" "cadvisor" {
 
 resource "docker_container" "node_exporter" {
   name  = "pin-node-exporter"
-  image = "prom/node-exporter:latest"
+  image = "prom/node-exporter:v1.11.1"
 
   restart = "unless-stopped"
 
