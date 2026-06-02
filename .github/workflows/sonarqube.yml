@@ -1,0 +1,46 @@
+name: SonarQube
+
+# Analisis de SonarQube Cloud (CI-based, con cobertura). Corre aparte del
+# orquestador: es un check de calidad, no gatea el resto del pipeline.
+# Requisitos en SonarQube Cloud: el proyecto debe tener Automatic Analysis OFF
+# (CI-based y Automatic son mutuamente excluyentes) y el SONAR_TOKEN en secrets.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          # Historia completa: mejora el blame y el analisis de PRs de Sonar.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Coverage (lcov para Sonar)
+        working-directory: app
+        run: node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        with:
+          projectBaseDir: app
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

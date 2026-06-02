@@ -16,6 +16,7 @@ terraform/**/*.tfvars
 # Node
 app/node_modules/
 coverage/
+lcov.info
 
 # Logs
 *.log
