@@ -49,15 +49,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Generate SBOM (CycloneDX)
+      - name: Build de la imagen (local, sin push)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          load: true
+          tags: pin-app:scan
+
+      - name: Trivy (vulnerabilidades de la imagen)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: pin-app:scan
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          # Modo reporte: no bloquea el merge por CVEs de la imagen base que no
+          # siempre tienen fix. Para volverlo gate duro, poner exit-code: '1'.
+          exit-code: '0'
+
+      - name: SBOM de la imagen (CycloneDX)
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
-          path: ./app
+          image: pin-app:scan
           format: cyclonedx-json
-          output-file: sbom-cyclonedx.json
+          output-file: sbom-image-cyclonedx.json
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: sbom-cyclonedx
-          path: sbom-cyclonedx.json
+          name: sbom-image-cyclonedx
+          path: sbom-image-cyclonedx.json
+          if-no-files-found: error
+          retention-days: 30
