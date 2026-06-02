@@ -46,5 +46,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Unit tests
-        run: npm test
+      - name: Unit tests con coverage
+        run: npm run test:coverage
