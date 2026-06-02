@@ -1,0 +1,23 @@
+# Overlay de desarrollo. Corre la app con hot-reload (node --watch) en vez de la
+# imagen pre-buildeada, montando el codigo del host. El resto del stack (redis,
+# prometheus, grafana, cadvisor, node-exporter) se hereda de docker-compose.yml.
+#
+# Uso (desde la raiz del repo):
+#   docker compose -f monitoring/docker-compose.yml -f monitoring/docker-compose.dev.yml up
+#   o, mas corto:  just dev
+#
+# Los paths relativos resuelven contra monitoring/ (dir del primer -f), por eso
+# el codigo es ../app.
+services:
+  pin-app:
+    image: node:24-alpine
+    working_dir: /usr/src/app
+    # npm ci una vez al levantar; node --watch (npm run dev) reinicia la app al
+    # cambiar el codigo, sin rebuild de imagen.
+    command: sh -c "npm ci && npm run dev"
+    volumes:
+      # Codigo del host montado en el contenedor.
+      - ../app:/usr/src/app
+      # node_modules en volumen anonimo: el mount del host no lo pisa y conserva
+      # los binarios de Linux instalados adentro (no los de Windows del host).
+      - /usr/src/app/node_modules

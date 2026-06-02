@@ -55,5 +55,24 @@ services:
       - ./dashboard.json:/var/lib/grafana/dashboards/dashboard.json:ro
       - ./provisioning:/etc/grafana/provisioning:ro
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    container_name: pin-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  node-exporter:
+    image: prom/node-exporter:v1.11.1
+    container_name: pin-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+
 volumes:
   grafana-data:
