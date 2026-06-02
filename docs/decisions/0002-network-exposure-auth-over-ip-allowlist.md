@@ -38,10 +38,14 @@ nadie. Para algo que debe ver un tercero desconocido, la herramienta correcta es
 
 - **App (80): publica** (`0.0.0.0/0`). Es el producto; el equipo y el evaluador
   pegan a `/weather`, `/health`, `/metrics` desde cualquier IP.
-- **Grafana (3000): publica pero detras de su login**, endurecido: password
-  fuerte por secret (no `admin123`), `GF_AUTH_ANONYMOUS_ENABLED=false`,
-  `GF_USERS_ALLOW_SIGN_UP=false`. El evaluador entra con la URL y el login desde
-  cualquier IP.
+- **Grafana (3000): publica en modo solo-lectura.** Acceso anonimo con rol
+  Viewer (`GF_AUTH_ANONYMOUS_ENABLED=true`, `GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer`):
+  quien evalua ve el dashboard sin cuenta ni login, desde cualquier IP. La
+  cuenta admin queda protegida por password (secret, no `admin123`) para editar,
+  y el alta de usuarios deshabilitada (`GF_USERS_ALLOW_SIGN_UP=false`). No hace
+  falta una cuenta de revision ni compartir credenciales: es el patron estandar
+  de dashboard publico de Grafana, y es seguro aca porque las metricas no son
+  sensibles y la datasource de Prometheus es interna.
 - **Prometheus (9090), cAdvisor (8081), node-exporter (9100): no expuestos.** Se
   quitan sus reglas de ingress del security group (el SG es el unico control
   real de exposicion a internet; el datasource y el scrape son internos y siguen
@@ -74,14 +78,16 @@ Con esto `var.allowed_cidr` deja de ser necesaria para el acceso de terceros.
 ## Consecuencias
 
 - **A favor:** ningun puerto de administracion ni de metricas queda expuesto a
-  internet; SSH sin puerto abierto y con acceso auditado; el evaluador entra a la
-  app y al dashboard por URL y login desde cualquier IP, sin que tengamos que
+  internet; SSH sin puerto abierto y con acceso auditado; quien evalua ve la app
+  y el dashboard por URL desde cualquier IP, sin cuenta ni que tengamos que
   conocer su direccion. Mejora directa del criterio de seguridad.
-- **En contra:** que Grafana sea publico traslada el peso a la fortaleza de su
-  autenticacion, por eso es condicion endurecerla (password fuerte por secret,
-  anonimo y signup deshabilitados). SSM agrega un IAM role e instance profile al
-  modulo (esfuerzo medio, no "barato"). Ver Prometheus directo ahora requiere
-  entrar por SSM y consultar `localhost:9090`, en vez de abrirlo en el navegador.
+- **En contra:** el dashboard queda legible por cualquiera (es el costo de que
+  sea publico de solo-lectura); es aceptable porque las metricas no son sensibles
+  y el anonimo es Viewer, asi que no puede editar ni configurar. El peso recae en
+  que la cuenta admin tenga password fuerte por secret. SSM agrega un IAM role e
+  instance profile al modulo (esfuerzo medio, no "barato"). Ver Prometheus
+  directo ahora requiere entrar por SSM y consultar `localhost:9090`, en vez de
+  abrirlo en el navegador.
 - TLS por delante de Grafana (reverse proxy con Let's Encrypt) es la mejora
   natural siguiente; requiere un dominio, asi que queda como opcional fuera de
   esta decision.
