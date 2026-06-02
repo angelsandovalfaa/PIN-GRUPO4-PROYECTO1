@@ -81,3 +81,9 @@ variable "ghcr_token" {
   default     = ""
   sensitive   = true
 }
+
+variable "cache_ttl" {
+  description = "TTL en segundos de la cache Redis del proxy de clima"
+  type        = number
+  default     = 300
+}

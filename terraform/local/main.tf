@@ -10,12 +10,35 @@ resource "docker_image" "app" {
   name = var.app_image
 }
 
+resource "docker_image" "redis" {
+  name = "redis:7-alpine"
+}
+
+resource "docker_container" "redis" {
+  name  = "pin-redis"
+  image = docker_image.redis.image_id
+
+  restart = "unless-stopped"
+  command = ["redis-server", "--save", "", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+
+  networks_advanced {
+    name = docker_network.pin.name
+  }
+}
+
 resource "docker_container" "app" {
   name  = "pin-app"
   image = docker_image.app.image_id
 
   restart = "unless-stopped"
-  env     = ["PORT=80"]
+  env = [
+    "PORT=80",
+    "REDIS_URL=redis://pin-redis:6379",
+    "REDIS_TTL=${var.cache_ttl}",
+    "OPEN_METEO_URL=https://api.open-meteo.com"
+  ]
+
+  depends_on = [docker_container.redis]
 
   networks_advanced {
     name = docker_network.pin.name
