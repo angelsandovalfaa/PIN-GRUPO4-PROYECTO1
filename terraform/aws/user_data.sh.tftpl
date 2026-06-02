@@ -44,6 +44,10 @@ cat > /opt/pin/prometheus/prometheus.yml <<'PROM'
 ${prometheus_config}
 PROM
 
+cat > /opt/pin/prometheus/alerts.yml <<'ALERTS'
+${alert_rules}
+ALERTS
+
 mkdir -p /opt/pin/provisioning/dashboards
 mkdir -p /opt/pin/provisioning/datasources
 

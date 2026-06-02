@@ -172,6 +172,7 @@ resource "aws_instance" "pin" {
 
   user_data_base64 = base64gzip(templatefile("${path.module}/user_data.sh.tftpl", {
     prometheus_config        = local.prometheus_config
+    alert_rules              = file("${path.module}/../../monitoring/alerts.yml")
     docker_compose           = local.docker_compose
     dashboard_json           = local.dashboard_json
     provisioning_dashboards  = local.provisioning_dashboards_yml

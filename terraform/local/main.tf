@@ -69,6 +69,11 @@ resource "docker_container" "prometheus" {
     content = templatefile("${path.module}/../../monitoring/templates/prometheus.yml.tftpl", {})
     file    = "/etc/prometheus/prometheus.yml"
   }
+
+  upload {
+    content = file("${path.module}/../../monitoring/alerts.yml")
+    file    = "/etc/prometheus/alerts.yml"
+  }
 }
 
 resource "docker_container" "grafana" {
