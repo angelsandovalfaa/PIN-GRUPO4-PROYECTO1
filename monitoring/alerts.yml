@@ -1,0 +1,38 @@
+groups:
+  - name: pin-app
+    rules:
+      - alert: AppDown
+        expr: up{job="pin-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "La app pin-app esta caida"
+          description: "Prometheus no puede scrapear pin-app hace mas de 1 minuto."
+
+      - alert: HighErrorRate
+        expr: (sum(rate(http_requests_total{status_code!="200"}[5m])) or vector(0)) / (sum(rate(http_requests_total[5m])) or vector(1)) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tasa de errores HTTP alta"
+          description: "Mas del 5% de las respuestas no son 200 en los ultimos 5m."
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 alta"
+          description: "La latencia p95 de la app supera 500ms en los ultimos 5m."
+
+      - alert: RedisCacheDown
+        expr: dependency_up{dependency="redis"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cache Redis caido"
+          description: "dependency_up del cache es 0 hace 2m. La app sigue respondiendo (bypass al upstream) pero sin cache."
