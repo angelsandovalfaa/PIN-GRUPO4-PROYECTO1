@@ -27,6 +27,7 @@ no lleva ADR: vive en el README o en un comentario inline.
 | [0003](0003-rollback-redeploy-imagen-previa.md) | Rollback por redeploy de una imagen previa de GHCR, reusando el deploy, sin rebuild |
 | [0004](0004-backend-remoto-como-iac-modulo-bootstrap.md) | Backend remoto de Terraform (S3 + lock DynamoDB) como IaC, con modulo bootstrap de state local |
 | [0005](0005-mejoras-diferidas-oidc-y-guard-de-rebuild.md) | Mejoras diferidas deliberadamente: OIDC para AWS y guard de rebuild de imagen |
+| [0006](0006-eip-y-recreate-on-deploy.md) | IP publica estable (EIP) y recrear la instancia en cada deploy (user_data_replace_on_change) |
 
 ## Formato
 

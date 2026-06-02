@@ -172,6 +172,12 @@ resource "aws_instance" "pin" {
   key_name               = var.key_name
   iam_instance_profile   = aws_iam_instance_profile.ssm.name
 
+  # Un deploy con imagen nueva cambia el user_data; con esto la instancia se
+  # recrea y re-corre el user_data, asi la instancia viva refleja el ultimo
+  # deploy (de lo contrario el user_data solo corre en el primer boot y queda
+  # congelada). El EIP mantiene la IP estable entre recreaciones.
+  user_data_replace_on_change = true
+
   user_data_base64 = base64gzip(templatefile("${path.module}/user_data.sh.tftpl", {
     prometheus_config        = local.prometheus_config
     alert_rules              = file("${path.module}/../../monitoring/alerts.yml")
@@ -186,4 +192,21 @@ resource "aws_instance" "pin" {
   tags = {
     Name = "${var.project_name}-ec2"
   }
+}
+
+# IP publica estable. El public IP auto-asignado (map_public_ip_on_launch) cambia
+# en cada stop/start o recreacion de la instancia, asi que la URL se movia. Con un
+# EIP la direccion no cambia, y al recrear la instancia (user_data_replace_on_change)
+# el EIP se reasocia a la nueva.
+resource "aws_eip" "pin" {
+  domain = "vpc"
+
+  tags = {
+    Name = "${var.project_name}-eip"
+  }
+}
+
+resource "aws_eip_association" "pin" {
+  instance_id   = aws_instance.pin.id
+  allocation_id = aws_eip.pin.id
 }
