@@ -28,12 +28,54 @@ jobs:
     uses: ./.github/workflows/30-pipeline-docker-publish.yml
     secrets: inherit
 
+  # Detecta si el push a main toco algo que cambie lo que se deploya. Si solo
+  # se tocaron docs, .github o terraform/local, no hace falta redeployar AWS.
+  # Corre en paralelo a la cadena build->...->docker (no la encadena).
+  changes:
+    name: Detect infra changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      deploy: ${{ steps.filter.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          # Historia completa: con rebase-merge un push a main puede aterrizar
+          # varios commits, y `git diff $BEFORE_SHA $CURRENT_SHA` necesita que
+          # ambos SHAs esten en el clon. fetch-depth 2 solo veria el ultimo
+          # commit y podria saltarse un deploy que si correspondia.
+          fetch-depth: 0
+      - name: Check changed paths
+        id: filter
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          changed="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA" 2>/dev/null || git diff --name-only HEAD~1 HEAD)"
+          echo "Changed files:"; echo "$changed"
+          if echo "$changed" | grep -qE '^terraform/aws/|^monitoring/|^app/'; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "Infra/app changed -> deploy will run."
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "No infra/app change -> skipping deploy."
+          fi
+
   ci_deploy_aws:
     name: Deploy AWS Terraform
-    if: github.ref == 'refs/heads/main'
-    needs: ci_docker
+    needs: [ci_docker, changes]
+    # always() es necesario porque al sumar `changes` a needs, en PRs ese job se
+    # skipea (su if exige push a main) y sin always() arrastraria el deploy a
+    # skipped. Pero always() desactiva el corto-circuito por fallo de la cadena,
+    # asi que se exige ci_docker.result=='success' explicito: sin eso, deployaria
+    # una imagen que no se llego a publicar.
+    if: >-
+      always() &&
+      needs.ci_docker.result == 'success' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.deploy == 'true'
     uses: ./.github/workflows/40-pipeline-deploy-aws.yml
     with:
       image_ref: ${{ needs.ci_docker.outputs.image_ref }}
     secrets: inherit
-  
