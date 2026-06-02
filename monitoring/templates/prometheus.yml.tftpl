@@ -9,7 +9,7 @@ scrape_configs:
   - job_name: "pin-app"
     metrics_path: /metrics
     static_configs:
-      - targets: ["pin-app:80"]
+      - targets: ["pin-app:3000"]
 
   - job_name: "cadvisor"
     static_configs:

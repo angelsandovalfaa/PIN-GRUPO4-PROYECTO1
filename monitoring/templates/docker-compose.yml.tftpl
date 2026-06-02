@@ -4,7 +4,7 @@ services:
     container_name: pin-app
     restart: unless-stopped
     environment:
-      PORT: "80"
+      PORT: "3000"
       REDIS_URL: redis://redis:6379
       REDIS_TTL: "${cache_ttl}"
       OPEN_METEO_URL: https://api.open-meteo.com
@@ -14,7 +14,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "${app_external_port}:80"
+      - "${app_external_port}:3000"
 
   redis:
     image: redis:7-alpine

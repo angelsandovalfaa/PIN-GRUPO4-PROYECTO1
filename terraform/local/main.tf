@@ -32,7 +32,7 @@ resource "docker_container" "app" {
 
   restart = "unless-stopped"
   env = [
-    "PORT=80",
+    "PORT=3000",
     "REDIS_URL=redis://pin-redis:6379",
     "REDIS_TTL=${var.cache_ttl}",
     "OPEN_METEO_URL=https://api.open-meteo.com"
@@ -45,7 +45,7 @@ resource "docker_container" "app" {
   }
 
   ports {
-    internal = 80
+    internal = 3000
     external = var.app_external_port
   }
 }
