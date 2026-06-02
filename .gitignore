@@ -4,6 +4,10 @@ terraform/**/*.tfstate
 terraform/**/*.tfstate.*
 terraform/**/crash.log
 
+# Terraform vars: pueden tener secretos. Los .tfvars.example si se versionan.
+terraform/**/*.tfvars
+!terraform/**/*.tfvars.example
+
 # Env files: pueden tener secretos. Los .env.example si se versionan.
 .env
 *.env
@@ -11,6 +15,10 @@ terraform/**/crash.log
 
 # Node
 app/node_modules/
+coverage/
+
+# Logs
+*.log
 
 # OS/editor
 .DS_Store
