@@ -10,7 +10,7 @@
 # el codigo es ../app.
 services:
   pin-app:
-    image: node:24-alpine
+    image: node:26-alpine
     working_dir: /usr/src/app
     # npm ci una vez al levantar; npm run dev corre nodemon en modo polling
     # (--legacy-watch) y reinicia la app al cambiar el codigo, sin rebuild. Se
